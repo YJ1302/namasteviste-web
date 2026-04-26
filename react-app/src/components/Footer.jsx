@@ -28,7 +28,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Menú */}
+          {/* Men */}
           <div>
             <div className="footer-col-title">Menú</div>
             <nav className="footer-links" aria-label="Links de menú">
