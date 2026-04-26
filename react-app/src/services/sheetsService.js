@@ -56,6 +56,24 @@ export const sheetsService = {
     }
   },
 
+  // Actualizar plato en el menú (Admin)
+  updateFoodMenu: async (id, itemData) => {
+    try {
+      const response = await fetch(`${API_URL}/ID/${id}?sheet=Menu_Comida`, {
+        method: 'PUT',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ data: itemData })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating food menu item:', error);
+      throw error;
+    }
+  },
+
   // ----- INVENTARIO TIENDA -----
 
   // Obtener todo el inventario (Para Admin)
@@ -98,6 +116,24 @@ export const sheetsService = {
       return await response.json();
     } catch (error) {
       console.error('Error adding shop item:', error);
+      throw error;
+    }
+  },
+
+  // Actualizar producto en la tienda (Admin)
+  updateShopInventory: async (id, itemData) => {
+    try {
+      const response = await fetch(`${API_URL}/ID/${id}?sheet=Inventario_Tienda`, {
+        method: 'PUT',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ data: itemData })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating shop item:', error);
       throw error;
     }
   },

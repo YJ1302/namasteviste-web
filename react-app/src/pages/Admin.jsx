@@ -12,6 +12,7 @@ export default function Admin() {
 
   // Form State
   const [showForm, setShowForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: ''
   });
@@ -46,7 +47,11 @@ export default function Admin() {
           Imagen_URL: formData.Imagen_URL,
           Activo: formData.Activo
         };
-        await sheetsService.addFoodMenu(payload);
+        if (isEditing) {
+          await sheetsService.updateFoodMenu(formData.ID, payload);
+        } else {
+          await sheetsService.addFoodMenu(payload);
+        }
       } else {
         const payload = {
           ID: formData.ID,
@@ -57,14 +62,34 @@ export default function Admin() {
           Stock: formData.Stock,
           Imagen_URL: formData.Imagen_URL
         };
-        await sheetsService.addShopInventory(payload);
+        if (isEditing) {
+          await sheetsService.updateShopInventory(formData.ID, payload);
+        } else {
+          await sheetsService.addShopInventory(payload);
+        }
       }
       setShowForm(false);
+      setIsEditing(false);
       setFormData({ ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: '' });
       fetchData(); // Recargar datos
     } catch (error) {
       alert('Error guardando los datos.');
     }
+  };
+
+  const handleEdit = (item) => {
+    setFormData({
+      ID: item.ID || item.id,
+      Nombre: item.Nombre || item.name,
+      Descripcion: item.Descripcion || item.desc || '',
+      Precio: item.Precio || item.price,
+      Categoria: item.Categoria || item.category,
+      Imagen_URL: item.Imagen_URL || item.img || '',
+      Activo: item.Activo !== undefined ? item.Activo : 'VERDADERO',
+      Stock: item.Stock || item.stock || ''
+    });
+    setIsEditing(true);
+    setShowForm(true);
   };
 
   const currentItems = activeTab === 'menu' ? menuItems : shopItems;
@@ -127,7 +152,11 @@ export default function Admin() {
           <h1 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-dark)' }}>
             {activeTab === 'menu' ? 'Platillos (Preventa)' : 'Productos (Tienda)'}
           </h1>
-          <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>
+          <button className="btn btn-primary btn-sm" onClick={() => {
+            setIsEditing(false);
+            setFormData({ ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: '' });
+            setShowForm(true);
+          }}>
             <Plus size={16} /> Añadir {activeTab === 'menu' ? 'Platillo' : 'Producto'}
           </button>
         </div>
@@ -137,11 +166,11 @@ export default function Admin() {
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
             <div style={{ background: 'var(--color-white)', padding: '24px', borderRadius: 'var(--radius-md)', width: '400px', maxWidth: '90%' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <h3 style={{ margin: 0 }}>Añadir {activeTab === 'menu' ? 'Platillo' : 'Producto'}</h3>
+                <h3 style={{ margin: 0 }}>{isEditing ? 'Editar' : 'Añadir'} {activeTab === 'menu' ? 'Platillo' : 'Producto'}</h3>
                 <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
               </div>
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <input required type="text" name="ID" placeholder="ID (ej. bc-002)" value={formData.ID} onChange={handleInputChange} className="form-control" />
+                <input required type="text" name="ID" placeholder="ID (ej. bc-002)" value={formData.ID} onChange={handleInputChange} className="form-control" readOnly={isEditing} style={{ backgroundColor: isEditing ? '#f0f0f0' : 'white' }} />
                 <input required type="text" name="Nombre" placeholder="Nombre" value={formData.Nombre} onChange={handleInputChange} className="form-control" />
                 <input required type="text" name="Descripcion" placeholder="Descripción" value={formData.Descripcion} onChange={handleInputChange} className="form-control" />
                 <select required name="Categoria" value={formData.Categoria} onChange={handleInputChange} className="form-control">
@@ -192,6 +221,7 @@ export default function Admin() {
                   <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Categoría</th>
                   <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>{activeTab === 'menu' ? 'Activo' : 'Stock'}</th>
                   <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Precio</th>
+                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -208,11 +238,20 @@ export default function Admin() {
                       {activeTab === 'menu' ? (item.Activo || 'VERDADERO') : (item.Stock || item.stock)}
                     </td>
                     <td style={{ padding: '14px 20px', fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-burgundy)' }}>${parseFloat(item.Precio || item.price || 0).toFixed(2)}</td>
+                    <td style={{ padding: '14px 20px' }}>
+                      <button 
+                        onClick={() => handleEdit(item)}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-burgundy)', padding: '4px' }}
+                        title="Editar"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {currentItems.length === 0 && (
                   <tr>
-                    <td colSpan="5" style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-light)' }}>
+                    <td colSpan="6" style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-light)' }}>
                       No hay items en esta sección.
                     </td>
                   </tr>
