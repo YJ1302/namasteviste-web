@@ -21,7 +21,8 @@ export default function Shop() {
         img: item.Imagen_URL || '/images/default_shop.png',
         category: (item.Categoria || '').toLowerCase(),
         type: 'shop',
-        hennaNotice: (item.Categoria || '').toLowerCase() === 'henna'
+        hennaNotice: (item.Categoria || '').toLowerCase() === 'henna',
+        Puntos_Otorgados: parseInt(item.Puntos_Otorgados, 10) || 0
       }));
       setShopProducts(formattedData);
       setLoading(false);

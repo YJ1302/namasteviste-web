@@ -58,11 +58,15 @@ export default function CheckoutModal({ isOpen, onClose }) {
   const [availableDates, setAvailableDates] = useState([]);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
   
   // Estados para geocodificación y mapa
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showNoResults, setShowNoResults] = useState(false);
+  const selectedAddressRef = useRef('');
   
   // Estados de cálculo y envío
   const [userLocation, setUserLocation] = useState(BUSINESS_LOCATION);
@@ -90,27 +94,66 @@ export default function CheckoutModal({ isOpen, onClose }) {
     setAvailableDates(dates);
   }, [isOpen]);
 
-  // Manejador del buscador de direcciones (Nominatim API)
-  const handleSearchChange = async (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    
-    if (query.length < 4) {
-      setSearchResults([]);
-      return;
-    }
-    
-    setIsSearching(true);
-    try {
-      // Buscar solo en Perú
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=pe`);
-      const data = await res.json();
-      setSearchResults(data);
-    } catch (error) {
-      console.error("Error buscando dirección:", error);
-    } finally {
-      setIsSearching(false);
-    }
+  // Efecto para debounce de la búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Efecto para buscar la dirección en Nominatim cuando cambia el debouncedQuery
+  useEffect(() => {
+    const searchAddress = async () => {
+      // Si el texto es exactamente lo que el usuario acaba de seleccionar, no buscamos de nuevo.
+      if (debouncedQuery === selectedAddressRef.current) {
+        setSearchResults([]);
+        setShowNoResults(false);
+        return;
+      }
+
+      if (debouncedQuery.length < 4) {
+        setSearchResults([]);
+        setShowNoResults(false);
+        return;
+      }
+      
+      setIsSearching(true);
+      setShowNoResults(false);
+      try {
+        // Mejorar la búsqueda asumiendo Lima si no se especifica, para resultados más exactos
+        const queryLower = debouncedQuery.toLowerCase();
+        const queryToSearch = (queryLower.includes('lima') || queryLower.includes('peru') || queryLower.includes('callao'))
+          ? debouncedQuery 
+          : `${debouncedQuery}, Lima, Peru`;
+
+        // Añadir parámetros para mejorar la precisión y el idioma
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryToSearch)}&limit=5&countrycodes=pe&addressdetails=1`, {
+          headers: {
+            'Accept-Language': 'es'
+          }
+        });
+        
+        if (!res.ok) throw new Error('Error en la respuesta de red');
+        const data = await res.json();
+        setSearchResults(data);
+        setShowNoResults(data.length === 0);
+      } catch (error) {
+        console.error("Error buscando dirección:", error);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    searchAddress();
+  }, [debouncedQuery]);
+
+  // Manejador del input de direcciones
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+    setShowNoResults(false);
+    selectedAddressRef.current = ''; // Resetear al escribir
   };
 
   const handleSelectAddress = (result) => {
@@ -118,9 +161,11 @@ export default function CheckoutModal({ isOpen, onClose }) {
     const newLng = parseFloat(result.lon);
     const newPos = { lat: newLat, lng: newLng };
     
+    selectedAddressRef.current = result.display_name;
     setUserLocation(newPos);
     setSearchQuery(result.display_name);
     setSearchResults([]);
+    setShowNoResults(false);
     calculateDistance(newLat, newLng);
   };
 
@@ -173,9 +218,22 @@ export default function CheckoutModal({ isOpen, onClose }) {
 
   const finalTotal = cartTotal + (deliveryType === 'delivery' ? shippingCost : 0);
 
+  const puntosGanadosEnEstaOrden = cart.reduce((total, item) => {
+    // Asegurarnos de que sea un número, si no existe o está vacío, usar 0
+    const puntosItem = parseInt(item.Puntos_Otorgados, 10) || 0;
+    // Multiplicar por la cantidad de ese item en el carrito
+    const cantidad = parseInt(item.qty, 10) || 1; 
+    return total + (puntosItem * cantidad);
+  }, 0);
+  console.log("Puntos calculados del carrito:", puntosGanadosEnEstaOrden);
+
   // Envío e Integración del Flujo Híbrido
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    console.log("Inspeccionando Carrito Completo:", JSON.stringify(cart, null, 2));
+    console.log("Puntos a sumar en esta orden:", puntosGanadosEnEstaOrden);
+
     if (hasFood && !selectedDate) {
       alert('Por favor selecciona una fecha de entrega para tu pedido de comida.');
       return;
@@ -185,15 +243,20 @@ export default function CheckoutModal({ isOpen, onClose }) {
     const formData = new FormData(e.target);
     const articulos = cart.map(item => `${item.name} (x${item.qty})`).join(', ');
 
+    const randomCode = Math.floor(1000 + Math.random() * 9000);
+    const generatedId = `NV-${randomCode}`;
+
     const mapLink = deliveryType === 'delivery' && shippingDistance !== null 
       ? `https://www.google.com/maps/search/?api=1&query=${userLocation.lat},${userLocation.lng}` 
       : 'N/A';
 
+    const telefonoIngresado = formData.get('phone');
+
     const pedidoData = {
-      ID_Pedido: `ORD-${Date.now()}`,
+      ID_Pedido: generatedId,
       Fecha_Pedido: new Date().toISOString().split('T')[0],
       Nombre_Cliente: formData.get('name'),
-      Telefono: formData.get('phone'),
+      Telefono: telefonoIngresado,
       Direccion: deliveryType === 'pickup' 
         ? 'Recojo en tienda' 
         : `${formData.get('addressReference') || searchQuery} (GPS: ${mapLink})`,
@@ -204,30 +267,43 @@ export default function CheckoutModal({ isOpen, onClose }) {
       Estado: 'Pendiente'
     };
 
+    let nuevoTotalPuntos = puntosGanadosEnEstaOrden;
+
     try {
+      console.log("1. Iniciando guardado de pedido...");
       await sheetsService.createOrder(pedidoData);
-    } catch (error) {
-      console.error('Error al guardar en Sheets:', error);
-      alert('Hubo un problema al registrar en la base de datos, pero te redirigiremos a WhatsApp para completar tu pedido como método de respaldo.');
-    } finally {
-      const metodoTexto = deliveryType === 'pickup' ? 'Recojo en tienda' : 'Envío a domicilio';
-      const gpsLinkStr = deliveryType === 'delivery' ? `\n*Ubicación GPS:* ${mapLink}` : '';
+
+      console.log("2. Pedido guardado. Calculando puntos...");
+      // La variable puntosGanadosEnEstaOrden ya tiene el cálculo
+
+      console.log("3. Llamando a updateOrCreateClientePuntos con total:", puntosGanadosEnEstaOrden);
+      nuevoTotalPuntos = await sheetsService.updateOrCreateClientePuntos(
+        telefonoIngresado,
+        formData.get('name'),
+        puntosGanadosEnEstaOrden
+      );
+
+      console.log("4. Puntos guardados exitosamente. Abriendo WhatsApp...");
       
-      const mensaje = `¡Hola! Quiero confirmar mi pedido (ID: ${pedidoData.ID_Pedido}):
+      const metodoTexto = deliveryType === 'pickup' ? 'Recojo en tienda' : 'Envío a domicilio';
+      const gpsLinkStr = deliveryType === 'delivery' ? `\n*Dirección:* ${pedidoData.Direccion}\n*Ubicación GPS:* ${mapLink}` : '';
+      
+      let mensaje = `¡Hola Namas-te-vistes! Acabo de registrar un pedido en la web.
 
-*Cliente:* ${pedidoData.Nombre_Cliente}
-*Método de Entrega:* ${metodoTexto}
-*Dirección:* ${pedidoData.Direccion}${gpsLinkStr}
-*Día de Entrega:* ${pedidoData.Dia_Entrega}
+ CÓDIGO DE PEDIDO: ${generatedId}
+ Cliente: ${pedidoData.Nombre_Cliente} 
+ Método: ${metodoTexto}${gpsLinkStr}
 
-*Artículos:*
-${cart.map(item => `- ${item.name} (x${item.qty}) - S/ ${(item.price * item.qty).toFixed(2)}`).join('\n')}
+ Mi Pedido:
+${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}
 
-*Subtotal:* S/ ${cartTotal.toFixed(2)}
-*Envío:* S/ ${(deliveryType === 'delivery' ? shippingCost : 0).toFixed(2)}
-*Total:* S/ ${finalTotal.toFixed(2)}
+ Total de referencia: S/ ${finalTotal.toFixed(2)}`;
 
-¡Muchas gracias!`;
+      if (puntosGanadosEnEstaOrden > 0) {
+        mensaje += `\n\n🌟 ¡Felicidades! Acabas de ganar ${puntosGanadosEnEstaOrden} puntos. Tu saldo total ahora es de ${nuevoTotalPuntos} puntos. ¡Guárdalos para canjear premios!`;
+      }
+
+      mensaje += `\n\n(Nota: Este pedido ya se encuentra registrado en el sistema bajo el código ${generatedId}. Los totales y disponibilidad están sujetos a verificación en la base de datos.)`;
 
       const mensajeCodificado = encodeURIComponent(mensaje);
       const numeroTelefono = '+51938828307'; 
@@ -237,6 +313,10 @@ ${cart.map(item => `- ${item.name} (x${item.qty}) - S/ ${(item.price * item.qty)
 
       clearCart();
       setIsSuccess(true);
+    } catch (error) {
+      console.error('Error en el flujo de Checkout:', error);
+      alert('Hubo un problema guardando tu orden en la base de datos.');
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -262,7 +342,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty}) - S/ ${(item.price * item.qty)
           <div className="checkout-body">
             <div>
               <form id="checkout-form" onSubmit={handleSubmit} noValidate>
-                <div className="checkout-section-title">📋 Tus Datos</div>
+                <div className="checkout-section-title">Tus Datos</div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="checkout-name">Nombre completo *</label>
                   <input type="text" id="checkout-name" name="name" className="form-control" placeholder="Ana García" required />
@@ -273,10 +353,16 @@ ${cart.map(item => `- ${item.name} (x${item.qty}) - S/ ${(item.price * item.qty)
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="checkout-phone">Teléfono / WhatsApp *</label>
-                  <input type="tel" id="checkout-phone" name="phone" className="form-control" placeholder="+51 987 654 321" required />
+                  <input type="tel" id="checkout-phone" name="phone" className="form-control" placeholder="+51 987 654 321" required 
+                    value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
+                  {phoneInput.length >= 6 && puntosGanadosEnEstaOrden > 0 && (
+                    <p style={{ fontSize: '0.85rem', color: 'var(--color-burgundy)', marginTop: '6px', fontWeight: 'bold' }}>
+                      ✨ ¡Si ya eres cliente, ganarás {puntosGanadosEnEstaOrden} puntos con esta compra!
+                    </p>
+                  )}
                 </div>
 
-                <div className="checkout-section-title" style={{ marginTop: 20 }}>🚚 Tipo de Entrega</div>
+                <div className="checkout-section-title" style={{ marginTop: 20 }}>Tipo de Entrega</div>
                 <div className="delivery-options" role="radiogroup">
                   <div 
                     className={`delivery-opt ${deliveryType === 'pickup' ? 'selected' : ''}`} 
@@ -323,7 +409,19 @@ ${cart.map(item => `- ${item.name} (x${item.qty}) - S/ ${(item.price * item.qty)
                       />
                       <Search size={18} style={{ position: 'absolute', right: '12px', top: '10px', color: 'var(--color-text-light)' }} />
                       
-                      {searchResults.length > 0 && (
+                      {isSearching && (
+                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000, background: 'white', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '0.85rem', color: 'var(--color-text-light)' }}>
+                          Buscando...
+                        </div>
+                      )}
+                      
+                      {showNoResults && (
+                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000, background: 'white', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '0.85rem', color: 'var(--color-text-light)' }}>
+                          No se encontraron resultados. Intenta buscar calles o cruces.
+                        </div>
+                      )}
+
+                      {!isSearching && searchResults.length > 0 && (
                         <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000, background: 'white', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: '200px', overflowY: 'auto' }}>
                           {searchResults.map((res, index) => (
                             <div 

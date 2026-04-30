@@ -156,5 +156,81 @@ export const sheetsService = {
       console.error('Error creating order:', error);
       throw error;
     }
+  },
+
+  // ----- CLIENTES Y PUNTOS -----
+
+  // Obtener puntos de un cliente por teléfono
+  getClientePuntos: async (telefono) => {
+    try {
+      const telClean = telefono.replace(/\D/g, '');
+      const response = await fetch(`${API_URL}/search?Telefono=${telClean}&sheet=Clientes_Puntos`);
+      if (!response.ok) throw new Error('Error al conectar con la API');
+      const data = await response.json();
+      return data.length > 0 ? data[0] : null;
+    } catch (error) {
+      console.error('Error fetching client points:', error);
+      return null;
+    }
+  },
+
+  // Actualizar o crear registro de puntos del cliente
+  updateOrCreateClientePuntos: async (telefono, nombre, puntosNuevos) => {
+    try {
+      const telClean = telefono.replace(/\D/g, '');
+      console.log("Iniciando guardado de puntos para:", telClean);
+      let nuevoTotal = parseInt(puntosNuevos);
+
+      // GET: buscar si existe
+      const responseGet = await fetch(`${API_URL}/search?Telefono=${telClean}&sheet=Clientes_Puntos`);
+      console.log("Status de respuesta (GET search):", responseGet.status);
+      if (!responseGet.ok) throw new Error('Error al buscar cliente en SheetDB');
+      const data = await responseGet.json();
+      
+      if (data && data.length > 0) {
+        // Si el cliente existe (hiciste el GET y devolvió un array con datos)
+        const clienteActual = data[0];
+        const puntosAnteriores = parseInt(clienteActual.Puntos_Acumulados, 10) || 0;
+        const puntosNuevosInt = parseInt(puntosNuevos, 10) || 0;
+        const totalActualizado = puntosAnteriores + puntosNuevosInt;
+        
+        nuevoTotal = totalActualizado;
+
+        console.log(`Cliente encontrado. Puntos actuales: ${puntosAnteriores}. Sumando: ${puntosNuevosInt}. Total final: ${totalActualizado}`);
+
+        // SINTAXIS CRÍTICA PARA SHEETDB PUT:
+        // La URL debe ser: /ID_o_Columna/ValorBuscado?sheet=NombreHoja
+        const putUrl = `${API_URL}/Telefono/${telClean}?sheet=Clientes_Puntos`;
+        
+        console.log("URL de actualización PUT:", putUrl);
+
+        const responsePut = await fetch(putUrl, {
+          method: 'PUT',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ data: { Puntos_Acumulados: totalActualizado } })
+        });
+        console.log("Status de respuesta (PUT):", responsePut.status);
+        if (!responsePut.ok) throw new Error('Error al actualizar puntos');
+      } else {
+        // POST: si el cliente no existe
+        const responsePost = await fetch(`${API_URL}?sheet=Clientes_Puntos`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ data: { Telefono: telClean, Nombre_Cliente: nombre, Puntos_Acumulados: nuevoTotal } })
+        });
+        console.log("Status de respuesta (POST):", responsePost.status);
+        if (!responsePost.ok) throw new Error('Error al crear cliente');
+      }
+      return nuevoTotal;
+    } catch (error) {
+      console.error('ERROR CRÍTICO EN SHEETDB:', error);
+      throw error;
+    }
   }
 };

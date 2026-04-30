@@ -23,7 +23,8 @@ export default function FoodMenu() {
         img: item.Imagen_URL || '/images/default_food.png',
         category: (item.Categoria || '').toLowerCase(),
         type: 'food',
-        rating: 4.8 // Default rating for simplicity
+        rating: 4.8, // Default rating for simplicity
+        Puntos_Otorgados: parseInt(item.Puntos_Otorgados, 10) || 0
       }));
       setMenuItems(formattedData);
       setLoading(false);
