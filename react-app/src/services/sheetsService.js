@@ -1,13 +1,4 @@
-/**
- * Servicio para conectarse a Google Sheets utilizando SheetDB.
- * SheetDB proporciona una API REST fácil de usar que lee y escribe
- * directamente en nuestra hoja de Google Sheets.
- * 
- * Requisito: Crear una cuenta en sheetdb.io y conectar tu URL de la hoja de cálculo.
- */
-
-// Reemplaza esto con tu URL de API de SheetDB (ejemplo: https://sheetdb.io/api/v1/tu-id-api)
-const API_URL = 'https://sheetdb.io/api/v1/bqa32l4pgnxwl';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwdXAwKepmKMq1pWbujzfvrbQSy6vZROC-J_r-HKT8dOFawcX2c3xcTVF7idLImpTdZ5A/exec';
 
 const cleanAndDeduplicate = (data) => {
   if (!Array.isArray(data)) return [];
@@ -15,8 +6,7 @@ const cleanAndDeduplicate = (data) => {
   const seenNames = new Set();
   
   for (const item of data) {
-    // Si no tiene nombre o está vacío, ignóralo
-    const nameStr = item.Nombre || item.Imagen_URL; // Imagen_URL para backgrounds
+    const nameStr = item.Nombre || item.Imagen_URL; 
     if (!nameStr || String(nameStr).trim() === '') continue; 
     
     if (!seenNames.has(nameStr)) {
@@ -27,13 +17,25 @@ const cleanAndDeduplicate = (data) => {
   return unique;
 };
 
+// Función auxiliar para centralizar las peticiones POST (Apps Script)
+const postData = async (action, payload = {}, id = null) => {
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8' // Obligatorio para evitar CORS en Apps Script
+    },
+    body: JSON.stringify({ action, payload, id })
+  });
+  if (!response.ok) throw new Error('Error de red al conectar con Google Apps Script');
+  return await response.json();
+};
+
 export const sheetsService = {
   // ----- MENU DE COMIDA -----
 
-  // Obtener todo el menú (Para Admin)
   getAllFoodMenu: async () => {
     try {
-      const response = await fetch(`${API_URL}?sheet=Menu_Comida`);
+      const response = await fetch(`${API_URL}?action=getMenu`);
       if (!response.ok) throw new Error('Error al conectar con la API');
       const data = await response.json();
       return cleanAndDeduplicate(data);
@@ -43,7 +45,6 @@ export const sheetsService = {
     }
   },
 
-  // Obtener menú público (solo Activos)
   getPublicFoodMenu: async () => {
     try {
       const data = await sheetsService.getAllFoodMenu();
@@ -57,36 +58,18 @@ export const sheetsService = {
     }
   },
 
-  // Añadir plato al menú (Admin)
   addFoodMenu: async (itemData) => {
     try {
-      const response = await fetch(`${API_URL}?sheet=Menu_Comida`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ data: [itemData] }) // Formato requerido por SheetDB
-      });
-      return await response.json();
+      return await postData('addMenu', itemData);
     } catch (error) {
       console.error('Error adding food menu item:', error);
       throw error;
     }
   },
 
-  // Actualizar plato en el menú (Admin)
   updateFoodMenu: async (id, itemData) => {
     try {
-      const response = await fetch(`${API_URL}/ID/${encodeURIComponent(id)}?sheet=Menu_Comida`, {
-        method: 'PATCH',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ data: itemData })
-      });
-      return await response.json();
+      return await postData('updateMenu', itemData, id);
     } catch (error) {
       console.error('Error updating food menu item:', error);
       throw error;
@@ -95,10 +78,9 @@ export const sheetsService = {
 
   // ----- INVENTARIO TIENDA -----
 
-  // Obtener todo el inventario (Para Admin)
   getAllShopInventory: async () => {
     try {
-      const response = await fetch(`${API_URL}?sheet=Inventario_Tienda`);
+      const response = await fetch(`${API_URL}?action=getShop`);
       if (!response.ok) throw new Error('Error al conectar con la API');
       const data = await response.json();
       return cleanAndDeduplicate(data);
@@ -108,7 +90,6 @@ export const sheetsService = {
     }
   },
 
-  // Obtener inventario público (solo con Stock > 0)
   getPublicShopInventory: async () => {
     try {
       const data = await sheetsService.getAllShopInventory();
@@ -122,36 +103,18 @@ export const sheetsService = {
     }
   },
 
-  // Añadir producto a la tienda (Admin)
   addShopInventory: async (itemData) => {
     try {
-      const response = await fetch(`${API_URL}?sheet=Inventario_Tienda`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ data: [itemData] })
-      });
-      return await response.json();
+      return await postData('addShop', itemData);
     } catch (error) {
       console.error('Error adding shop item:', error);
       throw error;
     }
   },
 
-  // Actualizar producto en la tienda (Admin)
   updateShopInventory: async (id, itemData) => {
     try {
-      const response = await fetch(`${API_URL}/ID/${encodeURIComponent(id)}?sheet=Inventario_Tienda`, {
-        method: 'PATCH',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ data: itemData })
-      });
-      return await response.json();
+      return await postData('updateShop', itemData, id);
     } catch (error) {
       console.error('Error updating shop item:', error);
       throw error;
@@ -160,18 +123,9 @@ export const sheetsService = {
 
   // ----- PEDIDOS -----
 
-  // Crear un nuevo pedido (Checkout)
   createOrder: async (orderData) => {
     try {
-      const response = await fetch(`${API_URL}?sheet=Pedidos`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ data: [orderData] })
-      });
-      return await response.json();
+      return await postData('addOrder', orderData);
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -180,11 +134,10 @@ export const sheetsService = {
 
   // ----- CLIENTES Y PUNTOS -----
 
-  // Obtener puntos de un cliente por teléfono
   getClientePuntos: async (telefono) => {
     try {
       const telClean = telefono.replace(/\D/g, '');
-      const response = await fetch(`${API_URL}/search?Telefono=${telClean}&sheet=Clientes_Puntos`);
+      const response = await fetch(`${API_URL}?action=getClientePuntos&telefono=${telClean}`);
       if (!response.ok) throw new Error('Error al conectar con la API');
       const data = await response.json();
       return data.length > 0 ? data[0] : null;
@@ -194,62 +147,32 @@ export const sheetsService = {
     }
   },
 
-  // Actualizar o crear registro de puntos del cliente
   updateOrCreateClientePuntos: async (telefono, nombre, puntosNuevos) => {
     try {
       const telClean = telefono.replace(/\D/g, '');
       console.log("Iniciando guardado de puntos para:", telClean);
-      let nuevoTotal = parseInt(puntosNuevos);
+      let nuevoTotal = parseInt(puntosNuevos, 10) || 0;
 
       // GET: buscar si existe
-      const responseGet = await fetch(`${API_URL}/search?Telefono=${telClean}&sheet=Clientes_Puntos`);
-      console.log("Status de respuesta (GET search):", responseGet.status);
-      if (!responseGet.ok) throw new Error('Error al buscar cliente en SheetDB');
+      const responseGet = await fetch(`${API_URL}?action=getClientePuntos&telefono=${telClean}`);
+      if (!responseGet.ok) throw new Error('Error al buscar cliente');
       const data = await responseGet.json();
       
       if (data && data.length > 0) {
-        // Si el cliente existe (hiciste el GET y devolvió un array con datos)
+        // Update
         const clienteActual = data[0];
         const puntosAnteriores = parseInt(clienteActual.Puntos_Acumulados, 10) || 0;
-        const puntosNuevosInt = parseInt(puntosNuevos, 10) || 0;
-        const totalActualizado = puntosAnteriores + puntosNuevosInt;
-        
+        const totalActualizado = puntosAnteriores + nuevoTotal;
         nuevoTotal = totalActualizado;
-
-        console.log(`Cliente encontrado. Puntos actuales: ${puntosAnteriores}. Sumando: ${puntosNuevosInt}. Total final: ${totalActualizado}`);
-
-        // SINTAXIS CRÍTICA PARA SHEETDB PUT:
-        // La URL debe ser: /ID_o_Columna/ValorBuscado?sheet=NombreHoja
-        const putUrl = `${API_URL}/Telefono/${telClean}?sheet=Clientes_Puntos`;
         
-        console.log("URL de actualización PUT:", putUrl);
-
-        const responsePut = await fetch(putUrl, {
-          method: 'PATCH',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ data: { Puntos_Acumulados: totalActualizado } })
-        });
-        console.log("Status de respuesta (PUT):", responsePut.status);
-        if (!responsePut.ok) throw new Error('Error al actualizar puntos');
+        await postData('updateOrCreateClientePuntos', { Telefono: telClean, Puntos_Acumulados: totalActualizado });
       } else {
-        // POST: si el cliente no existe
-        const responsePost = await fetch(`${API_URL}?sheet=Clientes_Puntos`, {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ data: { Telefono: telClean, Nombre_Cliente: nombre, Puntos_Acumulados: nuevoTotal } })
-        });
-        console.log("Status de respuesta (POST):", responsePost.status);
-        if (!responsePost.ok) throw new Error('Error al crear cliente');
+        // Create
+        await postData('updateOrCreateClientePuntos', { Telefono: telClean, Nombre_Cliente: nombre, Puntos_Acumulados: nuevoTotal });
       }
       return nuevoTotal;
     } catch (error) {
-      console.error('ERROR CRÍTICO EN SHEETDB:', error);
+      console.error('ERROR CRÍTICO EN APPS SCRIPT:', error);
       throw error;
     }
   },
@@ -258,7 +181,7 @@ export const sheetsService = {
 
   getAllBackgrounds: async () => {
     try {
-      const response = await fetch(`${API_URL}?sheet=Backgrounds`);
+      const response = await fetch(`${API_URL}?action=getBackgrounds`);
       if (!response.ok) throw new Error('Error al conectar con la API');
       const data = await response.json();
       return cleanAndDeduplicate(data);
@@ -270,15 +193,7 @@ export const sheetsService = {
 
   addBackground: async (itemData) => {
     try {
-      const response = await fetch(`${API_URL}?sheet=Backgrounds`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ data: [itemData] })
-      });
-      return await response.json();
+      return await postData('addBackground', itemData);
     } catch (error) {
       console.error('Error adding background:', error);
       throw error;
@@ -287,15 +202,7 @@ export const sheetsService = {
 
   updateBackground: async (id, itemData) => {
     try {
-      const response = await fetch(`${API_URL}/ID/${encodeURIComponent(id)}?sheet=Backgrounds`, {
-        method: 'PATCH',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ data: itemData })
-      });
-      return await response.json();
+      return await postData('updateBackground', itemData, id);
     } catch (error) {
       console.error('Error updating background:', error);
       throw error;
@@ -304,13 +211,7 @@ export const sheetsService = {
 
   deleteBackground: async (id) => {
     try {
-      const response = await fetch(`${API_URL}/ID/${encodeURIComponent(id)}?sheet=Backgrounds`, {
-        method: 'DELETE',
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      return await response.json();
+      return await postData('deleteBackground', {}, id);
     } catch (error) {
       console.error('Error deleting background:', error);
       throw error;
