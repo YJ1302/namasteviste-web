@@ -58,7 +58,7 @@ export default function CartDrawer({ isOpen, onClose, onOpenCheckout }) {
                       </button>
                     </div>
                   </div>
-                  <div className="cart-item-price">${(item.price * item.qty).toFixed(2)}</div>
+                  <div className="cart-item-price">S/ {(item.price * item.qty).toFixed(2)}</div>
                 </div>
               ))}
 
@@ -72,7 +72,7 @@ export default function CartDrawer({ isOpen, onClose, onOpenCheckout }) {
                         <img className="crosssell-img" src={cs.img} alt={cs.name} loading="lazy" />
                         <div className="crosssell-info">
                           <div className="crosssell-name">{cs.name}</div>
-                          <div className="crosssell-price">${cs.price.toFixed(2)}</div>
+                          <div className="crosssell-price">S/ {cs.price.toFixed(2)}</div>
                         </div>
                         <button className="crosssell-add" aria-label={`Agregar ${cs.name}`}>+</button>
                       </div>
@@ -88,11 +88,11 @@ export default function CartDrawer({ isOpen, onClose, onOpenCheckout }) {
           <div className="cart-footer">
             <div className="cart-subtotal">
               <span>Subtotal</span>
-              <span>${cartTotal.toFixed(2)}</span>
+              <span>S/ {cartTotal.toFixed(2)}</span>
             </div>
             <div className="cart-total">
               <span>Total</span>
-              <span>${cartTotal.toFixed(2)}</span>
+              <span>S/ {cartTotal.toFixed(2)}</span>
             </div>
             <button className="btn btn-primary btn-block btn-lg" onClick={onOpenCheckout}>
               Finalizar Pedido →

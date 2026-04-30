@@ -353,7 +353,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="checkout-phone">Teléfono / WhatsApp *</label>
-                  <input type="tel" id="checkout-phone" name="phone" className="form-control" placeholder="+51 987 654 321" required 
+                  <input type="tel" id="checkout-phone" name="phone" className="form-control" placeholder="Ej. 987 654 321 (sin código)" required 
                     value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
                   {phoneInput.length >= 6 && puntosGanadosEnEstaOrden > 0 && (
                     <p style={{ fontSize: '0.85rem', color: 'var(--color-burgundy)', marginTop: '6px', fontWeight: 'bold' }}>

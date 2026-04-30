@@ -69,8 +69,8 @@ export default function Shop() {
           {/* Product Grid */}
           <div className="shop-main">
             <div className="product-grid">
-              {filteredProducts.map(product => (
-                <article className="product-card" key={product.id}>
+              {filteredProducts.map((product, index) => (
+                <article className="product-card" key={`${product.id}-${product.name}-${index}`}>
                   <div className="product-img-wrap">
                     <img src={product.img} alt={product.name} loading="lazy" />
                     {product.hennaNotice && (
@@ -93,8 +93,8 @@ export default function Shop() {
                     <h3 className="product-name">{product.name}</h3>
                     <div className="product-price-row">
                       <div className="product-price">
-                        {product.oldPrice && <span className="old-price">${product.oldPrice.toFixed(2)}</span>}
-                        ${product.price.toFixed(2)}
+                        {product.oldPrice && <span className="old-price">S/ {product.oldPrice.toFixed(2)}</span>}
+                        S/ {product.price.toFixed(2)}
                       </div>
                       <button className="quick-add-btn" onClick={() => addToCart(product)}><Plus size={18}/></button>
                     </div>

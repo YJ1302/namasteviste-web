@@ -5,9 +5,10 @@ import { sheetsService } from '../services/sheetsService';
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
-  const [activeTab, setActiveTab] = useState('menu'); // 'menu' | 'shop'
+  const [activeTab, setActiveTab] = useState('menu'); // 'menu' | 'shop' | 'backgrounds'
   const [menuItems, setMenuItems] = useState([]);
   const [shopItems, setShopItems] = useState([]);
+  const [backgroundItems, setBackgroundItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Form State
@@ -25,8 +26,10 @@ export default function Admin() {
     setLoading(true);
     const menu = await sheetsService.getAllFoodMenu();
     const shop = await sheetsService.getAllShopInventory();
+    const bg = await sheetsService.getAllBackgrounds();
     setMenuItems(menu);
     setShopItems(shop);
+    setBackgroundItems(bg);
     setLoading(false);
   };
 
@@ -52,7 +55,7 @@ export default function Admin() {
         } else {
           await sheetsService.addFoodMenu(payload);
         }
-      } else {
+      } else if (activeTab === 'shop') {
         const payload = {
           ID: formData.ID,
           Nombre: formData.Nombre,
@@ -66,6 +69,16 @@ export default function Admin() {
           await sheetsService.updateShopInventory(formData.ID, payload);
         } else {
           await sheetsService.addShopInventory(payload);
+        }
+      } else if (activeTab === 'backgrounds') {
+        const payload = {
+          ID: formData.ID,
+          Imagen_URL: formData.Imagen_URL
+        };
+        if (isEditing) {
+          await sheetsService.updateBackground(formData.ID, payload);
+        } else {
+          await sheetsService.addBackground(payload);
         }
       }
       setShowForm(false);
@@ -92,7 +105,7 @@ export default function Admin() {
     setShowForm(true);
   };
 
-  const currentItems = activeTab === 'menu' ? menuItems : shopItems;
+  const currentItems = activeTab === 'menu' ? menuItems : activeTab === 'shop' ? shopItems : backgroundItems;
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -143,6 +156,12 @@ export default function Admin() {
           >
             <Box size={18} /> Gestión de Tienda
           </button>
+          <button 
+            style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', background: activeTab === 'backgrounds' ? 'var(--color-cream)' : 'transparent', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: activeTab === 'backgrounds' ? 'var(--color-burgundy)' : 'var(--color-text)', fontWeight: activeTab === 'backgrounds' ? 600 : 400, textAlign: 'left' }}
+            onClick={() => setActiveTab('backgrounds')}
+          >
+            <Tag size={18} /> Fondos (Hero)
+          </button>
         </nav>
       </aside>
 
@@ -150,14 +169,14 @@ export default function Admin() {
       <main style={{ flex: 1, padding: '32px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <h1 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-dark)' }}>
-            {activeTab === 'menu' ? 'Platillos (Preventa)' : 'Productos (Tienda)'}
+            {activeTab === 'menu' ? 'Platillos (Preventa)' : activeTab === 'shop' ? 'Productos (Tienda)' : 'Fondos de Pantalla'}
           </h1>
           <button className="btn btn-primary btn-sm" onClick={() => {
             setIsEditing(false);
             setFormData({ ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: '' });
             setShowForm(true);
           }}>
-            <Plus size={16} /> Añadir {activeTab === 'menu' ? 'Platillo' : 'Producto'}
+            <Plus size={16} /> Añadir {activeTab === 'menu' ? 'Platillo' : activeTab === 'shop' ? 'Producto' : 'Fondo'}
           </button>
         </div>
 
@@ -166,31 +185,37 @@ export default function Admin() {
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
             <div style={{ background: 'var(--color-white)', padding: '24px', borderRadius: 'var(--radius-md)', width: '400px', maxWidth: '90%' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <h3 style={{ margin: 0 }}>{isEditing ? 'Editar' : 'Añadir'} {activeTab === 'menu' ? 'Platillo' : 'Producto'}</h3>
+                <h3 style={{ margin: 0 }}>{isEditing ? 'Editar' : 'Añadir'} {activeTab === 'menu' ? 'Platillo' : activeTab === 'shop' ? 'Producto' : 'Fondo'}</h3>
                 <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
               </div>
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <input required type="text" name="ID" placeholder="ID (ej. bc-002)" value={formData.ID} onChange={handleInputChange} className="form-control" readOnly={isEditing} style={{ backgroundColor: isEditing ? '#f0f0f0' : 'white' }} />
-                <input required type="text" name="Nombre" placeholder="Nombre" value={formData.Nombre} onChange={handleInputChange} className="form-control" />
-                <input required type="text" name="Descripcion" placeholder="Descripción" value={formData.Descripcion} onChange={handleInputChange} className="form-control" />
-                <select required name="Categoria" value={formData.Categoria} onChange={handleInputChange} className="form-control">
-                  <option value="" disabled>Seleccione una categoría</option>
-                  {activeTab === 'menu' ? (
-                    <>
-                      <option value="platos">Platos</option>
-                      <option value="entradas">Entradas</option>
-                      <option value="postres">Postres</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="ropa">Ropa</option>
-                      <option value="joyeria">Joyería</option>
-                      <option value="henna">Henna</option>
-                    </>
-                  )}
-                </select>
-                <input required type="number" step="0.01" name="Precio" placeholder="Precio" value={formData.Precio} onChange={handleInputChange} className="form-control" />
-                <input type="text" name="Imagen_URL" placeholder="URL de Imagen (ej. /images/...) " value={formData.Imagen_URL} onChange={handleInputChange} className="form-control" />
+                
+                {activeTab !== 'backgrounds' && (
+                  <>
+                    <input required type="text" name="Nombre" placeholder="Nombre" value={formData.Nombre} onChange={handleInputChange} className="form-control" />
+                    <input required type="text" name="Descripcion" placeholder="Descripción" value={formData.Descripcion} onChange={handleInputChange} className="form-control" />
+                    <select required name="Categoria" value={formData.Categoria} onChange={handleInputChange} className="form-control">
+                      <option value="" disabled>Seleccione una categoría</option>
+                      {activeTab === 'menu' ? (
+                        <>
+                          <option value="platos">Platos</option>
+                          <option value="entradas">Entradas</option>
+                          <option value="postres">Postres</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="ropa">Ropa</option>
+                          <option value="joyeria">Joyería</option>
+                          <option value="henna">Henna</option>
+                        </>
+                      )}
+                    </select>
+                    <input required type="number" step="0.01" name="Precio" placeholder="Precio" value={formData.Precio} onChange={handleInputChange} className="form-control" />
+                  </>
+                )}
+                
+                <input required type="text" name="Imagen_URL" placeholder="URL directa de la Imagen (ej. https://... o /images/...)" value={formData.Imagen_URL} onChange={handleInputChange} className="form-control" />
                 
                 {activeTab === 'menu' && (
                   <select name="Activo" value={formData.Activo} onChange={handleInputChange} className="form-control">
@@ -217,27 +242,45 @@ export default function Admin() {
               <thead style={{ background: 'var(--color-cream)' }}>
                 <tr>
                   <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>ID</th>
-                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Nombre</th>
-                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Categoría</th>
-                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>{activeTab === 'menu' ? 'Activo' : 'Stock'}</th>
-                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Precio</th>
+                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>{activeTab === 'backgrounds' ? 'Imagen' : 'Nombre'}</th>
+                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>{activeTab === 'backgrounds' ? 'URL' : 'Categoría'}</th>
+                  {activeTab !== 'backgrounds' && (
+                    <>
+                      <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>{activeTab === 'menu' ? 'Activo' : 'Stock'}</th>
+                      <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Precio</th>
+                    </>
+                  )}
                   <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {currentItems.map((item) => (
-                  <tr key={item.ID || item.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                {currentItems.map((item, index) => (
+                  <tr key={`${item.ID || item.id}-${activeTab}-${index}`} style={{ borderBottom: '1px solid var(--color-border)' }}>
                     <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--color-text)' }}>{item.ID || item.id}</td>
-                    <td style={{ padding: '14px 20px', fontSize: '0.9rem', fontWeight: 500, color: 'var(--color-dark)' }}>{item.Nombre || item.name}</td>
+                    <td style={{ padding: '14px 20px', fontSize: '0.9rem', fontWeight: 500, color: 'var(--color-dark)' }}>
+                      {activeTab === 'backgrounds' ? (
+                        <img src={item.Imagen_URL} alt="bg" style={{ width: '80px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                      ) : (
+                        item.Nombre || item.name
+                      )}
+                    </td>
                     <td style={{ padding: '14px 20px' }}>
-                      <span style={{ fontSize: '0.75rem', background: 'var(--color-cream-dk)', padding: '4px 8px', borderRadius: 'var(--radius-pill)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <Tag size={12} /> {item.Categoria || item.category}
-                      </span>
+                      {activeTab === 'backgrounds' ? (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text)' }}>{item.Imagen_URL}</span>
+                      ) : (
+                        <span style={{ fontSize: '0.75rem', background: 'var(--color-cream-dk)', padding: '4px 8px', borderRadius: 'var(--radius-pill)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Tag size={12} /> {item.Categoria || item.category}
+                        </span>
+                      )}
                     </td>
-                    <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--color-text)' }}>
-                      {activeTab === 'menu' ? (item.Activo || 'VERDADERO') : (item.Stock || item.stock)}
-                    </td>
-                    <td style={{ padding: '14px 20px', fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-burgundy)' }}>${parseFloat(item.Precio || item.price || 0).toFixed(2)}</td>
+                    {activeTab !== 'backgrounds' && (
+                      <>
+                        <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--color-text)' }}>
+                          {activeTab === 'menu' ? (item.Activo || 'VERDADERO') : (item.Stock || item.stock)}
+                        </td>
+                        <td style={{ padding: '14px 20px', fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-burgundy)' }}>S/ {parseFloat(item.Precio || item.price || 0).toFixed(2)}</td>
+                      </>
+                    )}
                     <td style={{ padding: '14px 20px' }}>
                       <button 
                         onClick={() => handleEdit(item)}
@@ -246,6 +289,20 @@ export default function Admin() {
                       >
                         <Edit2 size={18} />
                       </button>
+                      {activeTab === 'backgrounds' && (
+                        <button 
+                          onClick={async () => {
+                            if (window.confirm('¿Seguro de borrar este fondo?')) {
+                              await sheetsService.deleteBackground(item.ID);
+                              fetchData();
+                            }
+                          }}
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-text-light)', padding: '4px', marginLeft: '8px' }}
+                          title="Eliminar"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

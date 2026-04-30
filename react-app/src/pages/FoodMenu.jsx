@@ -66,8 +66,8 @@ export default function FoodMenu() {
         </div>
 
         <div className="menu-grid">
-          {filteredItems.map(item => (
-            <article className="menu-card" key={item.id}>
+          {filteredItems.map((item, index) => (
+            <article className="menu-card" key={`${item.id}-${item.name}-${index}`}>
               <div className="menu-card-img">
                 <img src={item.img} alt={item.name} loading="lazy" />
                 {item.badge && <span className={`menu-card-badge ${item.badgeClass}`}>{item.badge}</span>}
@@ -78,8 +78,8 @@ export default function FoodMenu() {
                 <p className="menu-card-desc">{item.desc}</p>
                 <div className="menu-card-footer">
                   <div className="menu-price">
-                    {item.oldPrice && <span>${item.oldPrice.toFixed(2)}</span>}
-                    ${item.price.toFixed(2)}
+                    {item.oldPrice && <span>S/ {item.oldPrice.toFixed(2)}</span>}
+                    S/ {item.price.toFixed(2)}
                   </div>
                   {isOrderingOpen ? (
                     <button className="add-to-cart-btn" onClick={() => addToCart(item)} aria-label="Añadir a carrito">

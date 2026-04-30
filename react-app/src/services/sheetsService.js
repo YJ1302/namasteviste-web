@@ -9,6 +9,24 @@
 // Reemplaza esto con tu URL de API de SheetDB (ejemplo: https://sheetdb.io/api/v1/tu-id-api)
 const API_URL = 'https://sheetdb.io/api/v1/bqa32l4pgnxwl';
 
+const cleanAndDeduplicate = (data) => {
+  if (!Array.isArray(data)) return [];
+  const unique = [];
+  const seenNames = new Set();
+  
+  for (const item of data) {
+    // Si no tiene nombre o está vacío, ignóralo
+    const nameStr = item.Nombre || item.Imagen_URL; // Imagen_URL para backgrounds
+    if (!nameStr || String(nameStr).trim() === '') continue; 
+    
+    if (!seenNames.has(nameStr)) {
+      seenNames.add(nameStr);
+      unique.push(item);
+    }
+  }
+  return unique;
+};
+
 export const sheetsService = {
   // ----- MENU DE COMIDA -----
 
@@ -17,7 +35,8 @@ export const sheetsService = {
     try {
       const response = await fetch(`${API_URL}?sheet=Menu_Comida`);
       if (!response.ok) throw new Error('Error al conectar con la API');
-      return await response.json();
+      const data = await response.json();
+      return cleanAndDeduplicate(data);
     } catch (error) {
       console.error('Error fetching all food menu:', error);
       return [];
@@ -59,8 +78,8 @@ export const sheetsService = {
   // Actualizar plato en el menú (Admin)
   updateFoodMenu: async (id, itemData) => {
     try {
-      const response = await fetch(`${API_URL}/ID/${id}?sheet=Menu_Comida`, {
-        method: 'PUT',
+      const response = await fetch(`${API_URL}/ID/${encodeURIComponent(id)}?sheet=Menu_Comida`, {
+        method: 'PATCH',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
@@ -81,7 +100,8 @@ export const sheetsService = {
     try {
       const response = await fetch(`${API_URL}?sheet=Inventario_Tienda`);
       if (!response.ok) throw new Error('Error al conectar con la API');
-      return await response.json();
+      const data = await response.json();
+      return cleanAndDeduplicate(data);
     } catch (error) {
       console.error('Error fetching all shop inventory:', error);
       return [];
@@ -123,8 +143,8 @@ export const sheetsService = {
   // Actualizar producto en la tienda (Admin)
   updateShopInventory: async (id, itemData) => {
     try {
-      const response = await fetch(`${API_URL}/ID/${id}?sheet=Inventario_Tienda`, {
-        method: 'PUT',
+      const response = await fetch(`${API_URL}/ID/${encodeURIComponent(id)}?sheet=Inventario_Tienda`, {
+        method: 'PATCH',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
@@ -205,7 +225,7 @@ export const sheetsService = {
         console.log("URL de actualización PUT:", putUrl);
 
         const responsePut = await fetch(putUrl, {
-          method: 'PUT',
+          method: 'PATCH',
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
@@ -230,6 +250,69 @@ export const sheetsService = {
       return nuevoTotal;
     } catch (error) {
       console.error('ERROR CRÍTICO EN SHEETDB:', error);
+      throw error;
+    }
+  },
+
+  // ----- BACKGROUNDS -----
+
+  getAllBackgrounds: async () => {
+    try {
+      const response = await fetch(`${API_URL}?sheet=Backgrounds`);
+      if (!response.ok) throw new Error('Error al conectar con la API');
+      const data = await response.json();
+      return cleanAndDeduplicate(data);
+    } catch (error) {
+      console.error('Error fetching backgrounds:', error);
+      return [];
+    }
+  },
+
+  addBackground: async (itemData) => {
+    try {
+      const response = await fetch(`${API_URL}?sheet=Backgrounds`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ data: [itemData] })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error adding background:', error);
+      throw error;
+    }
+  },
+
+  updateBackground: async (id, itemData) => {
+    try {
+      const response = await fetch(`${API_URL}/ID/${encodeURIComponent(id)}?sheet=Backgrounds`, {
+        method: 'PATCH',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ data: itemData })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating background:', error);
+      throw error;
+    }
+  },
+
+  deleteBackground: async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/ID/${encodeURIComponent(id)}?sheet=Backgrounds`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error deleting background:', error);
       throw error;
     }
   }

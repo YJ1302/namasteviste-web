@@ -1,18 +1,59 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Utensils, ShoppingBag } from 'lucide-react';
+import { sheetsService } from '../services/sheetsService';
 
 export default function Home() {
+  const [backgrounds, setBackgrounds] = useState([]);
+  const [currentBgIndex, setCurrentBgIndex] = useState(0);
+
+  useEffect(() => {
+    const fetchBackgrounds = async () => {
+      try {
+        const bgs = await sheetsService.getAllBackgrounds();
+        if (bgs && bgs.length > 0) {
+          setBackgrounds(bgs.map(b => b.Imagen_URL));
+        }
+      } catch (e) {
+        console.error("Error fetching backgrounds", e);
+      }
+    };
+    fetchBackgrounds();
+  }, []);
+
+  useEffect(() => {
+    if (backgrounds.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentBgIndex(prev => (prev + 1) % backgrounds.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [backgrounds]);
+
   return (
     <>
       <section id="hero" aria-labelledby="hero-heading">
-        <div className="hero-bg" aria-hidden="true"></div>
+        {backgrounds.length > 0 ? (
+          backgrounds.map((bg, idx) => (
+            <div 
+              key={idx}
+              className="hero-bg" 
+              aria-hidden="true"
+              style={{
+                backgroundImage: `url(${bg})`,
+                opacity: idx === currentBgIndex ? 1 : 0,
+                transition: 'opacity 1.5s ease-in-out, transform 8s ease'
+              }}
+            ></div>
+          ))
+        ) : (
+          <div className="hero-bg" aria-hidden="true"></div>
+        )}
         <div className="hero-overlay" aria-hidden="true"></div>
 
         <div className="container">
           <div className="hero-content">
             <div className="hero-eyebrow">
-              Cultura del Sur de Asia en tu ciudad
+              Cultura del India
             </div>
             <h1 className="hero-title" id="hero-heading">
               Donde la moda
