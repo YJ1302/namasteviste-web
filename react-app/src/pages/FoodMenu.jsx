@@ -3,6 +3,7 @@ import { useCart } from '../context/CartContext';
 import { Plus } from 'lucide-react';
 import { sheetsService } from '../services/sheetsService';
 import CountdownTimer, { useOrderWindow } from '../components/CountdownTimer';
+import ItemModal from '../components/ItemModal';
 
 export default function FoodMenu() {
   const { addToCart } = useCart();
@@ -10,6 +11,7 @@ export default function FoodMenu() {
   const [activeTab, setActiveTab] = useState('todos');
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   useEffect(() => {
     const loadMenu = async () => {
@@ -67,7 +69,12 @@ export default function FoodMenu() {
 
         <div className="menu-grid">
           {filteredItems.map((item, index) => (
-            <article className="menu-card" key={`${item.id}-${item.name}-${index}`}>
+            <article 
+              className="menu-card" 
+              key={`${item.id}-${item.name}-${index}`} 
+              onClick={() => setSelectedItem(item)} 
+              style={{ cursor: 'pointer' }}
+            >
               <div className="menu-card-img">
                 <img src={item.img} alt={item.name} loading="lazy" />
                 {item.badge && <span className={`menu-card-badge ${item.badgeClass}`}>{item.badge}</span>}
@@ -82,7 +89,11 @@ export default function FoodMenu() {
                     S/ {item.price.toFixed(2)}
                   </div>
                   {isOrderingOpen ? (
-                    <button className="add-to-cart-btn" onClick={() => addToCart(item)} aria-label="Añadir a carrito">
+                    <button 
+                      className="add-to-cart-btn" 
+                      onClick={(e) => { e.stopPropagation(); addToCart(item); }} 
+                      aria-label="Añadir a carrito"
+                    >
                       <Plus size={20} />
                     </button>
                   ) : (
@@ -96,6 +107,15 @@ export default function FoodMenu() {
           ))}
         </div>
       </div>
+
+      {selectedItem && (
+        <ItemModal 
+          item={selectedItem} 
+          onClose={() => setSelectedItem(null)} 
+          onAddToCart={addToCart}
+          isOrderingOpen={isOrderingOpen}
+        />
+      )}
     </section>
   );
 }

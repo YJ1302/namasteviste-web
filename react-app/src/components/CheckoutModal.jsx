@@ -72,6 +72,7 @@ export default function CheckoutModal({ isOpen, onClose }) {
   const [userLocation, setUserLocation] = useState(BUSINESS_LOCATION);
   const [shippingDistance, setShippingDistance] = useState(null);
   const [shippingCost, setShippingCost] = useState(0);
+  const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
 
   // Generar fechas de fin de semana para preventa de comida
   useEffect(() => {
@@ -98,7 +99,7 @@ export default function CheckoutModal({ isOpen, onClose }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
-    }, 800);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -113,7 +114,8 @@ export default function CheckoutModal({ isOpen, onClose }) {
         return;
       }
 
-      if (debouncedQuery.length < 4) {
+      const cleanQuery = debouncedQuery.replace(/[^\w\s\u00C0-\u017F,.-]/gi, '').trim();
+      if (cleanQuery.length < 3) {
         setSearchResults([]);
         setShowNoResults(false);
         return;
@@ -123,10 +125,10 @@ export default function CheckoutModal({ isOpen, onClose }) {
       setShowNoResults(false);
       try {
         // Mejorar la búsqueda asumiendo Lima si no se especifica, para resultados más exactos
-        const queryLower = debouncedQuery.toLowerCase();
+        const queryLower = cleanQuery.toLowerCase();
         const queryToSearch = (queryLower.includes('lima') || queryLower.includes('peru') || queryLower.includes('callao'))
-          ? debouncedQuery 
-          : `${debouncedQuery}, Lima, Peru`;
+          ? cleanQuery 
+          : `${cleanQuery}, Lima, Peru`;
 
         // Añadir parámetros para mejorar la precisión y el idioma
         const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryToSearch)}&limit=5&countrycodes=pe&addressdetails=1`, {
@@ -171,28 +173,49 @@ export default function CheckoutModal({ isOpen, onClose }) {
 
   // Cálculo de Distancia con OSRM y Lógica de Precios
   const calculateDistance = async (lat, lng) => {
+    setIsCalculatingDistance(true);
+    // Haversine fallback
+    const R = 6371; // Radio de la Tierra en km
+    const dLat = (lat - BUSINESS_LOCATION.lat) * (Math.PI / 180);
+    const dLng = (lng - BUSINESS_LOCATION.lng) * (Math.PI / 180);
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(BUSINESS_LOCATION.lat * (Math.PI / 180)) * Math.cos(lat * (Math.PI / 180)) * 
+      Math.sin(dLng / 2) * Math.sin(dLng / 2); 
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
+    const directDistance = R * c;
+    const estimatedDrivingDistance = directDistance * 1.35; // Multiplicador para rutas reales
+    
+    let finalDistKm = estimatedDrivingDistance;
+
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout para no trabar la UI
       const url = `https://router.project-osrm.org/route/v1/driving/${BUSINESS_LOCATION.lng},${BUSINESS_LOCATION.lat};${lng},${lat}?overview=false`;
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (data.routes && data.routes.length > 0) {
-        const distKm = data.routes[0].distance / 1000;
-        setShippingDistance(distKm);
-        
-        let cost = 0;
-        if (distKm <= 5.0) {
-          cost = 0;
-        } else if (distKm <= 12.0) {
-          cost = 10;
-        } else {
-          cost = 10 + (Math.ceil(distKm - 12) * 2);
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.routes && data.routes.length > 0) {
+          finalDistKm = data.routes[0].distance / 1000;
         }
-        setShippingCost(cost);
       }
     } catch (err) {
-      console.error("Error calculando distancia", err);
+      console.warn("OSRM falló o expiró, usando distancia estimada (Haversine)", err);
     }
+    
+    setShippingDistance(finalDistKm);
+    
+    let cost = 0;
+    if (finalDistKm <= 5.0) {
+      cost = 0;
+    } else if (finalDistKm <= 12.0) {
+      cost = 10;
+    } else {
+      cost = 10 + (Math.ceil(finalDistKm - 12) * 2);
+    }
+    setShippingCost(cost);
+    setIsCalculatingDistance(false);
   };
 
   // Componente del Marcador Móvil del Cliente
@@ -388,8 +411,8 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}
                       <div className="delivery-desc">Calculado en el mapa</div>
                     </div>
                     <div className="delivery-price">
-                      {deliveryType === 'delivery' && shippingDistance !== null 
-                        ? (shippingCost === 0 ? 'Gratis' : `+ S/ ${shippingCost.toFixed(2)}`) 
+                      {deliveryType === 'delivery' 
+                        ? (isCalculatingDistance ? <span style={{color: 'var(--color-gold)'}}>Calculando...</span> : (shippingDistance !== null ? (shippingCost === 0 ? 'Gratis' : `+ S/ ${shippingCost.toFixed(2)}`) : 'A calcular'))
                         : 'A calcular'}
                     </div>
                   </div>
@@ -454,12 +477,17 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}
                       </MapContainer>
                     </div>
                     
-                    {shippingDistance !== null && (
+                    {isCalculatingDistance ? (
+                      <div style={{ padding: '12px', background: 'var(--color-cream)', borderRadius: 'var(--radius-sm)', fontSize: '0.9rem', color: 'var(--color-text-light)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '16px', height: '16px', border: '2px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                        Calculando distancia de entrega...
+                      </div>
+                    ) : shippingDistance !== null ? (
                       <div style={{ padding: '12px', background: 'var(--color-cream)', borderRadius: 'var(--radius-sm)', fontSize: '0.9rem', color: 'var(--color-dark)' }}>
                         <strong>Distancia estimada:</strong> {shippingDistance.toFixed(2)} km <br/>
                         <strong>Costo de envío:</strong> {shippingCost === 0 ? 'S/ 0.00 (Gratis)' : `S/ ${shippingCost.toFixed(2)}`}
                       </div>
-                    )}
+                    ) : null}
 
                     <div className="form-group" style={{ marginTop: 14 }}>
                       <label className="form-label" htmlFor="checkout-addressReference">Detalles adicionales de entrega *</label>

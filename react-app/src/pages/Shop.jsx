@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { Heart, Plus, ShoppingCart } from 'lucide-react';
 import { sheetsService } from '../services/sheetsService';
+import ItemModal from '../components/ItemModal';
 
 export default function Shop() {
   const { addToCart, toggleWishlist, wishlist } = useCart();
   const [activeFilter, setActiveFilter] = useState('todos');
   const [shopProducts, setShopProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   useEffect(() => {
     const loadShop = async () => {
@@ -70,20 +72,25 @@ export default function Shop() {
           <div className="shop-main">
             <div className="product-grid">
               {filteredProducts.map((product, index) => (
-                <article className="product-card" key={`${product.id}-${product.name}-${index}`}>
+                <article 
+                  className="product-card" 
+                  key={`${product.id}-${product.name}-${index}`}
+                  onClick={() => setSelectedItem(product)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="product-img-wrap">
                     <img src={product.img} alt={product.name} loading="lazy" />
                     {product.hennaNotice && (
                       <div className="badge-notice">⚠️ Solo venta de productos — No incluye aplicación</div>
                     )}
                     <div className="product-overlay">
-                      <button className="overlay-btn" onClick={() => addToCart(product)}><ShoppingCart size={18} /></button>
-                      <button className="overlay-btn" onClick={() => toggleWishlist(product.id)}><Heart size={18} /></button>
+                      <button className="overlay-btn" onClick={(e) => { e.stopPropagation(); addToCart(product); }}><ShoppingCart size={18} /></button>
+                      <button className="overlay-btn" onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}><Heart size={18} /></button>
                     </div>
                     {product.badge && <span className={`product-badge ${product.badgeClass}`}>{product.badge}</span>}
                     <button 
                       className={`wishlist-btn ${wishlist.includes(product.id) ? 'active' : ''}`} 
-                      onClick={() => toggleWishlist(product.id)}
+                      onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
                     >
                       <Heart size={16} fill={wishlist.includes(product.id) ? 'currentColor' : 'none'} />
                     </button>
@@ -96,7 +103,7 @@ export default function Shop() {
                         {product.oldPrice && <span className="old-price">S/ {product.oldPrice.toFixed(2)}</span>}
                         S/ {product.price.toFixed(2)}
                       </div>
-                      <button className="quick-add-btn" onClick={() => addToCart(product)}><Plus size={18}/></button>
+                      <button className="quick-add-btn" onClick={(e) => { e.stopPropagation(); addToCart(product); }}><Plus size={18}/></button>
                     </div>
                   </div>
                 </article>
@@ -105,6 +112,15 @@ export default function Shop() {
           </div>
         </div>
       </div>
+
+      {selectedItem && (
+        <ItemModal 
+          item={selectedItem} 
+          onClose={() => setSelectedItem(null)} 
+          onAddToCart={addToCart}
+          isOrderingOpen={true} // Tienda siempre abierta para añadir al carrito
+        />
+      )}
     </section>
   );
 }
