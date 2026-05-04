@@ -147,11 +147,11 @@ export const sheetsService = {
     }
   },
 
-  updateOrCreateClientePuntos: async (telefono, nombre, puntosNuevos) => {
+  updateOrCreateClientePuntos: async (telefono, nombre, nuevoTotalPuntos) => {
     try {
       const telClean = telefono.replace(/\D/g, '');
       console.log("Iniciando guardado de puntos para:", telClean);
-      let nuevoTotal = parseInt(puntosNuevos, 10) || 0;
+      const total = parseInt(nuevoTotalPuntos, 10) || 0;
 
       // GET: buscar si existe
       const responseGet = await fetch(`${API_URL}?action=getClientePuntos&telefono=${telClean}`);
@@ -160,17 +160,12 @@ export const sheetsService = {
       
       if (data && data.length > 0) {
         // Update
-        const clienteActual = data[0];
-        const puntosAnteriores = parseInt(clienteActual.Puntos_Acumulados, 10) || 0;
-        const totalActualizado = puntosAnteriores + nuevoTotal;
-        nuevoTotal = totalActualizado;
-        
-        await postData('updateOrCreateClientePuntos', { Telefono: telClean, Puntos_Acumulados: totalActualizado });
+        await postData('updateOrCreateClientePuntos', { Telefono: telClean, Puntos_Acumulados: total });
       } else {
         // Create
-        await postData('updateOrCreateClientePuntos', { Telefono: telClean, Nombre_Cliente: nombre, Puntos_Acumulados: nuevoTotal });
+        await postData('updateOrCreateClientePuntos', { Telefono: telClean, Nombre_Cliente: nombre, Puntos_Acumulados: total });
       }
-      return nuevoTotal;
+      return total;
     } catch (error) {
       console.error('ERROR CRÍTICO EN APPS SCRIPT:', error);
       throw error;

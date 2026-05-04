@@ -40,6 +40,13 @@ const getBusinessLocation = (link) => {
 
 const BUSINESS_LOCATION = getBusinessLocation(BUSINESS_MAPS_LINK); 
 
+const CATALOGO_PREMIOS = [
+  { id: 'p1', nombre: '1 Porción de Gulab Jamun', costo: 60 },
+  { id: 'p2', nombre: '1 Cono de Henna Natural', costo: 100 },
+  { id: 'p3', nombre: 'Aretes Sorpresa', costo: 150 },
+  { id: 'p4', nombre: 'Descuento de S/ 25', costo: 250 }
+];
+
 // Componente auxiliar para actualizar el centro del mapa dinámicamente
 function MapUpdater({ center }) {
   const map = useMap();
@@ -60,6 +67,13 @@ export default function CheckoutModal({ isOpen, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
   
+  // Estados para canje de puntos
+  const [telefonoConsulta, setTelefonoConsulta] = useState('');
+  const [puntosDisponibles, setPuntosDisponibles] = useState(0);
+  const [clienteVerificado, setClienteVerificado] = useState(false);
+  const [premioSeleccionado, setPremioSeleccionado] = useState(null);
+  const [isVerifyingPoints, setIsVerifyingPoints] = useState(false);
+
   // Estados para geocodificación y mapa
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -250,6 +264,22 @@ export default function CheckoutModal({ isOpen, onClose }) {
   }, 0);
   console.log("Puntos calculados del carrito:", puntosGanadosEnEstaOrden);
 
+  const handleVerificarPuntos = async () => {
+    if (!telefonoConsulta) return;
+    setIsVerifyingPoints(true);
+    const cliente = await sheetsService.getClientePuntos(telefonoConsulta);
+    if (cliente) {
+      setPuntosDisponibles(parseInt(cliente.Puntos_Acumulados, 10) || 0);
+      setPhoneInput(telefonoConsulta); // Autocompletar el teléfono de la orden
+    } else {
+      setPuntosDisponibles(0);
+      alert('No se encontraron puntos para este número. Empezarás a acumular con esta orden.');
+      setPhoneInput(telefonoConsulta);
+    }
+    setClienteVerificado(true);
+    setIsVerifyingPoints(false);
+  };
+
   // Envío e Integración del Flujo Híbrido
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -275,6 +305,14 @@ export default function CheckoutModal({ isOpen, onClose }) {
 
     const telefonoIngresado = formData.get('phone');
 
+    const puntosGastados = premioSeleccionado ? premioSeleccionado.costo : 0;
+    const nuevoTotalPuntosCalculado = puntosDisponibles - puntosGastados + puntosGanadosEnEstaOrden;
+
+    let totalPagar = finalTotal;
+    if (premioSeleccionado && premioSeleccionado.nombre.includes('Descuento de S/ 25')) {
+      totalPagar = Math.max(0, finalTotal - 25);
+    }
+
     const pedidoData = {
       ID_Pedido: generatedId,
       Fecha_Pedido: new Date().toISOString().split('T')[0],
@@ -286,24 +324,23 @@ export default function CheckoutModal({ isOpen, onClose }) {
       Metodo_Entrega: deliveryType,
       Dia_Entrega: hasFood ? selectedDate : 'N/A',
       Articulos_Comprados: articulos,
-      Total: finalTotal.toFixed(2),
+      Total: totalPagar.toFixed(2),
       Estado: 'Pendiente'
     };
 
-    let nuevoTotalPuntos = puntosGanadosEnEstaOrden;
+    let nuevoTotalPuntos = nuevoTotalPuntosCalculado;
 
     try {
       console.log("1. Iniciando guardado de pedido...");
       await sheetsService.createOrder(pedidoData);
 
-      console.log("2. Pedido guardado. Calculando puntos...");
-      // La variable puntosGanadosEnEstaOrden ya tiene el cálculo
-
-      console.log("3. Llamando a updateOrCreateClientePuntos con total:", puntosGanadosEnEstaOrden);
+      console.log("2. Pedido guardado. Actualizando puntos...");
+      
+      console.log("3. Llamando a updateOrCreateClientePuntos con total:", nuevoTotalPuntosCalculado);
       nuevoTotalPuntos = await sheetsService.updateOrCreateClientePuntos(
         telefonoIngresado,
         formData.get('name'),
-        puntosGanadosEnEstaOrden
+        nuevoTotalPuntosCalculado
       );
 
       console.log("4. Puntos guardados exitosamente. Abriendo WhatsApp...");
@@ -311,6 +348,11 @@ export default function CheckoutModal({ isOpen, onClose }) {
       const metodoTexto = deliveryType === 'pickup' ? 'Recojo en tienda' : 'Envío a domicilio';
       const gpsLinkStr = deliveryType === 'delivery' ? `\n*Dirección:* ${pedidoData.Direccion}\n*Ubicación GPS:* ${mapLink}` : '';
       
+      let premioTexto = '';
+      if (premioSeleccionado) {
+        premioTexto = `\n🎁 Premio canjeado: ${premioSeleccionado.nombre} (-${premioSeleccionado.costo} pts)`;
+      }
+
       let mensaje = `¡Hola Namas-te-vistes! Acabo de registrar un pedido en la web.
 
  CÓDIGO DE PEDIDO: ${generatedId}
@@ -318,12 +360,12 @@ export default function CheckoutModal({ isOpen, onClose }) {
  Método: ${metodoTexto}${gpsLinkStr}
 
  Mi Pedido:
-${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}
+${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
 
- Total de referencia: S/ ${finalTotal.toFixed(2)}`;
+ Total a pagar: S/ ${totalPagar.toFixed(2)}`;
 
-      if (puntosGanadosEnEstaOrden > 0) {
-        mensaje += `\n\n🌟 ¡Felicidades! Acabas de ganar ${puntosGanadosEnEstaOrden} puntos. Tu saldo total ahora es de ${nuevoTotalPuntos} puntos. ¡Guárdalos para canjear premios!`;
+      if (puntosGanadosEnEstaOrden > 0 || puntosGastados > 0) {
+        mensaje += `\n\n🌟 Con esta compra ganaste ${puntosGanadosEnEstaOrden} puntos. Tu saldo total actualizado es de ${nuevoTotalPuntos} puntos.`;
       }
 
       mensaje += `\n\n(Nota: Este pedido ya se encuentra registrado en el sistema bajo el código ${generatedId}. Los totales y disponibilidad están sujetos a verificación en la base de datos.)`;
@@ -365,6 +407,72 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}
           <div className="checkout-body">
             <div>
               <form id="checkout-form" onSubmit={handleSubmit} noValidate>
+                {/* --- SECCIÓN DE PUNTOS --- */}
+                <div className="checkout-section-title">Canje de Puntos</div>
+                <div style={{ background: 'var(--color-cream)', padding: '16px', borderRadius: 'var(--radius-md)', marginBottom: '24px', border: '1px solid var(--color-border)' }}>
+                  {!clienteVerificado ? (
+                    <div>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--color-text-light)', marginBottom: '12px' }}>¿Tienes puntos acumulados? Ingresa tu número para canjear premios en esta orden.</p>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input 
+                          type="tel" 
+                          className="form-control" 
+                          placeholder="Tu número celular" 
+                          value={telefonoConsulta} 
+                          onChange={(e) => setTelefonoConsulta(e.target.value)} 
+                          style={{ flex: 1 }}
+                        />
+                        <button 
+                          type="button" 
+                          className="btn btn-secondary btn-sm" 
+                          onClick={handleVerificarPuntos} 
+                          disabled={isVerifyingPoints || !telefonoConsulta}
+                          style={{ padding: '0 16px', whiteSpace: 'nowrap' }}
+                        >
+                          {isVerifyingPoints ? 'Verificando...' : 'Verificar'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--color-dark)' }}>
+                          Tus Puntos: <span style={{ color: 'var(--color-gold)', fontSize: '1.2rem' }}>{puntosDisponibles}</span>
+                        </div>
+                        <button type="button" onClick={() => {setClienteVerificado(false); setPremioSeleccionado(null);}} style={{ background: 'none', border: 'none', color: 'var(--color-burgundy)', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}>
+                          Cambiar número
+                        </button>
+                      </div>
+                      
+                      {puntosDisponibles > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '4px' }}>Elige un premio (opcional):</p>
+                          <select 
+                            className="form-control" 
+                            value={premioSeleccionado ? premioSeleccionado.id : ''} 
+                            onChange={(e) => {
+                              if (!e.target.value) {
+                                setPremioSeleccionado(null);
+                              } else {
+                                setPremioSeleccionado(CATALOGO_PREMIOS.find(p => p.id === e.target.value));
+                              }
+                            }}
+                          >
+                            <option value="">No canjear nada hoy</option>
+                            {CATALOGO_PREMIOS.map(premio => (
+                              <option key={premio.id} value={premio.id} disabled={puntosDisponibles < premio.costo}>
+                                {premio.nombre} ({premio.costo} pts)
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', margin: 0 }}>No tienes puntos suficientes para canjear hoy.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="checkout-section-title">Tus Datos</div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="checkout-name">Nombre completo *</label>
