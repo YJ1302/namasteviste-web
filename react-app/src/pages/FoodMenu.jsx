@@ -24,9 +24,9 @@ export default function FoodMenu() {
 
   useEffect(() => {
     // 3 seconds animation sequence
-    const timer1 = setTimeout(() => setAnimationStep(1), 1000);
-    const timer2 = setTimeout(() => setAnimationStep(2), 2000);
-    const timer3 = setTimeout(() => setShowAnimation(false), 3000);
+    const timer1 = setTimeout(() => setAnimationStep(1), 1500);
+    const timer2 = setTimeout(() => setAnimationStep(2), 2500);
+    const timer3 = setTimeout(() => setShowAnimation(false), 3500);
 
     return () => {
       clearTimeout(timer1);
