@@ -65,6 +65,7 @@ export default function CheckoutModal({ isOpen, onClose }) {
   const [availableDates, setAvailableDates] = useState([]);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStep, setSubmitStep] = useState(0);
   const [phoneInput, setPhoneInput] = useState('');
   
   // Estados para canje de puntos
@@ -337,16 +338,25 @@ export default function CheckoutModal({ isOpen, onClose }) {
 
     try {
       console.log("1. Iniciando guardado de pedido...");
-      await sheetsService.createOrder(pedidoData);
-
-      console.log("2. Pedido guardado. Actualizando puntos...");
+      setSubmitStep(1);
       
-      console.log("3. Llamando a updateOrCreateClientePuntos con total:", nuevoTotalPuntosCalculado);
-      nuevoTotalPuntos = await sheetsService.updateOrCreateClientePuntos(
-        telefonoIngresado,
-        formData.get('name'),
-        nuevoTotalPuntosCalculado
-      );
+      const minimumDelay = new Promise(resolve => {
+        setTimeout(() => setSubmitStep(2), 1500);
+        setTimeout(resolve, 3000);
+      });
+
+      const backendWork = async () => {
+        await sheetsService.createOrder(pedidoData);
+        console.log("2. Pedido guardado. Actualizando puntos...");
+        console.log("3. Llamando a updateOrCreateClientePuntos con total:", nuevoTotalPuntosCalculado);
+        nuevoTotalPuntos = await sheetsService.updateOrCreateClientePuntos(
+          telefonoIngresado,
+          formData.get('name'),
+          nuevoTotalPuntosCalculado
+        );
+      };
+
+      await Promise.all([backendWork(), minimumDelay]);
 
       console.log("4. Puntos guardados exitosamente. Abriendo WhatsApp...");
       
@@ -388,6 +398,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
       alert('Hubo un problema guardando tu orden en la base de datos.');
     } finally {
       setIsSubmitting(false);
+      setSubmitStep(0);
     }
   };
 
@@ -400,10 +411,33 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
 
   return (
     <div id="checkout-overlay" className="open" role="dialog" aria-modal="true" aria-label="Finalizar pedido">
-      <div className="checkout-modal">
+      <div className="checkout-modal" style={isSubmitting ? { overflow: 'hidden' } : {}}>
+        {isSubmitting && submitStep > 0 && (
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(253, 250, 246, 0.85)', backdropFilter: 'blur(8px)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999, borderRadius: 'var(--radius-md)'
+          }}>
+            {submitStep === 1 ? (
+              <div style={{ textAlign: 'center' }}>
+                <img src="/images/food-tray.gif" alt="Registrando orden" style={{ width: 140, height: 140, marginBottom: 20, animation: 'popIn 0.4s ease-out' }} />
+                <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-burgundy)', fontSize: '1.5rem', animation: 'fadeIn 0.4s ease-out' }}>Registrando tu orden...</h3>
+                <p style={{ color: 'var(--color-text-light)', marginTop: 8, animation: 'fadeIn 0.6s ease-out' }}>Preparando todo en la base de datos.</p>
+              </div>
+            ) : submitStep === 2 ? (
+              <div style={{ textAlign: 'center' }}>
+                <img src="/images/healthy-meal.gif" alt="Preparando recibo" style={{ width: 140, height: 140, marginBottom: 20, animation: 'popIn 0.4s ease-out' }} />
+                <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-burgundy)', fontSize: '1.5rem', animation: 'fadeIn 0.4s ease-out' }}>Generando tu recibo...</h3>
+                <p style={{ color: 'var(--color-text-light)', marginTop: 8, animation: 'fadeIn 0.6s ease-out' }}>Te conectaremos con WhatsApp en un instante.</p>
+              </div>
+            ) : null}
+          </div>
+        )}
+
         <div className="checkout-header">
           <h2>Finalizar Pedido</h2>
-          <button className="close-checkout" onClick={handleClose} aria-label="Cerrar checkout">
+          <button className="close-checkout" onClick={handleClose} aria-label="Cerrar checkout" disabled={isSubmitting}>
             <X size={20} />
           </button>
         </div>
