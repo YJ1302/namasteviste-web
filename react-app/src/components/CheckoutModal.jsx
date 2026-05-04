@@ -255,6 +255,11 @@ export default function CheckoutModal({ isOpen, onClose }) {
 
   const finalTotal = cartTotal + (deliveryType === 'delivery' ? shippingCost : 0);
 
+  let totalPagar = finalTotal;
+  if (premioSeleccionado && premioSeleccionado.nombre.includes('Descuento de S/ 25')) {
+    totalPagar = Math.max(0, finalTotal - 25);
+  }
+
   const puntosGanadosEnEstaOrden = cart.reduce((total, item) => {
     // Asegurarnos de que sea un número, si no existe o está vacío, usar 0
     const puntosItem = parseInt(item.Puntos_Otorgados, 10) || 0;
@@ -308,9 +313,9 @@ export default function CheckoutModal({ isOpen, onClose }) {
     const puntosGastados = premioSeleccionado ? premioSeleccionado.costo : 0;
     const nuevoTotalPuntosCalculado = puntosDisponibles - puntosGastados + puntosGanadosEnEstaOrden;
 
-    let totalPagar = finalTotal;
-    if (premioSeleccionado && premioSeleccionado.nombre.includes('Descuento de S/ 25')) {
-      totalPagar = Math.max(0, finalTotal - 25);
+    let articulosStr = articulos;
+    if (premioSeleccionado && !premioSeleccionado.nombre.includes('Descuento de S/ 25')) {
+      articulosStr += `, ${premioSeleccionado.nombre} (Premio Canjeado)`;
     }
 
     const pedidoData = {
@@ -323,7 +328,7 @@ export default function CheckoutModal({ isOpen, onClose }) {
         : `${formData.get('addressReference') || searchQuery} (GPS: ${mapLink})`,
       Metodo_Entrega: deliveryType,
       Dia_Entrega: hasFood ? selectedDate : 'N/A',
-      Articulos_Comprados: articulos,
+      Articulos_Comprados: articulosStr,
       Total: totalPagar.toFixed(2),
       Estado: 'Pendiente'
     };
@@ -650,10 +655,17 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
                   <span className="order-item-price">S/ {shippingCost.toFixed(2)}</span>
                 </div>
               )}
+
+              {premioSeleccionado && (
+                <div className="order-summary-item" style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed var(--color-border)', color: 'var(--color-gold)', fontWeight: 600 }}>
+                  <span className="order-item-name">🎁 {premioSeleccionado.nombre} (Canje)</span>
+                  <span className="order-item-price">{premioSeleccionado.nombre.includes('Descuento de S/ 25') ? '- S/ 25.00' : 'GRATIS'}</span>
+                </div>
+              )}
               
               <div className="order-total-row" style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
                 <span>Total</span>
-                <span>S/ {finalTotal.toFixed(2)}</span>
+                <span>S/ {totalPagar.toFixed(2)}</span>
               </div>
 
               <div style={{ marginTop: 20, padding: 14, background: 'var(--color-cream)', borderRadius: 'var(--radius-md)', fontSize: '.8rem', color: 'var(--color-text-light)', lineHeight: 1.55 }}>
