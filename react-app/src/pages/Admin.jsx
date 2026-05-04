@@ -15,7 +15,7 @@ export default function Admin() {
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: ''
+    ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: '', Puntos_Otorgados: ''
   });
 
   useEffect(() => {
@@ -48,7 +48,8 @@ export default function Admin() {
           Precio: formData.Precio,
           Categoria: formData.Categoria,
           Imagen_URL: formData.Imagen_URL,
-          Activo: formData.Activo
+          Activo: formData.Activo,
+          Puntos_Otorgados: formData.Puntos_Otorgados
         };
         if (isEditing) {
           await sheetsService.updateFoodMenu(formData.ID, payload);
@@ -63,7 +64,8 @@ export default function Admin() {
           Categoria: formData.Categoria,
           Precio: formData.Precio,
           Stock: formData.Stock,
-          Imagen_URL: formData.Imagen_URL
+          Imagen_URL: formData.Imagen_URL,
+          Puntos_Otorgados: formData.Puntos_Otorgados
         };
         if (isEditing) {
           await sheetsService.updateShopInventory(formData.ID, payload);
@@ -83,7 +85,7 @@ export default function Admin() {
       }
       setShowForm(false);
       setIsEditing(false);
-      setFormData({ ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: '' });
+      setFormData({ ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: '', Puntos_Otorgados: '' });
       fetchData(); // Recargar datos
     } catch (error) {
       alert('Error guardando los datos.');
@@ -99,7 +101,8 @@ export default function Admin() {
       Categoria: item.Categoria || item.category,
       Imagen_URL: item.Imagen_URL || item.img || '',
       Activo: item.Activo !== undefined ? item.Activo : 'VERDADERO',
-      Stock: item.Stock || item.stock || ''
+      Stock: item.Stock || item.stock || '',
+      Puntos_Otorgados: item.Puntos_Otorgados || ''
     });
     setIsEditing(true);
     setShowForm(true);
@@ -173,7 +176,7 @@ export default function Admin() {
           </h1>
           <button className="btn btn-primary btn-sm" onClick={() => {
             setIsEditing(false);
-            setFormData({ ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: '' });
+            setFormData({ ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: '', Puntos_Otorgados: '' });
             setShowForm(true);
           }}>
             <Plus size={16} /> Añadir {activeTab === 'menu' ? 'Platillo' : activeTab === 'shop' ? 'Producto' : 'Fondo'}
@@ -212,6 +215,7 @@ export default function Admin() {
                       )}
                     </select>
                     <input required type="number" step="0.01" name="Precio" placeholder="Precio" value={formData.Precio} onChange={handleInputChange} className="form-control" />
+                    <input type="number" name="Puntos_Otorgados" placeholder="Puntos que otorga (ej. 10)" value={formData.Puntos_Otorgados} onChange={handleInputChange} className="form-control" />
                   </>
                 )}
                 
@@ -248,6 +252,7 @@ export default function Admin() {
                     <>
                       <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>{activeTab === 'menu' ? 'Activo' : 'Stock'}</th>
                       <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Precio</th>
+                      <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Puntos</th>
                     </>
                   )}
                   <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Acciones</th>
@@ -279,6 +284,7 @@ export default function Admin() {
                           {activeTab === 'menu' ? (item.Activo || 'VERDADERO') : (item.Stock || item.stock)}
                         </td>
                         <td style={{ padding: '14px 20px', fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-burgundy)' }}>S/ {parseFloat(item.Precio || item.price || 0).toFixed(2)}</td>
+                        <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--color-gold)', fontWeight: 'bold' }}>{item.Puntos_Otorgados || 0}</td>
                       </>
                     )}
                     <td style={{ padding: '14px 20px' }}>
