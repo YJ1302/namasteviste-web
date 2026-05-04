@@ -70,45 +70,60 @@ export default function Shop() {
 
           {/* Product Grid */}
           <div className="shop-main">
-            <div className="product-grid">
-              {filteredProducts.map((product, index) => (
-                <article 
-                  className="product-card" 
-                  key={`${product.id}-${product.name}-${index}`}
-                  onClick={() => setSelectedItem(product)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <div className="product-img-wrap">
-                    <img src={product.img} alt={product.name} loading="lazy" />
-                    {product.hennaNotice && (
-                      <div className="badge-notice">⚠️ Solo venta de productos — No incluye aplicación</div>
-                    )}
-                    <div className="product-overlay">
-                      <button className="overlay-btn" onClick={(e) => { e.stopPropagation(); addToCart(product); }}><ShoppingCart size={18} /></button>
-                      <button className="overlay-btn" onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}><Heart size={18} /></button>
-                    </div>
-                    {product.badge && <span className={`product-badge ${product.badgeClass}`}>{product.badge}</span>}
-                    <button 
-                      className={`wishlist-btn ${wishlist.includes(product.id) ? 'active' : ''}`} 
-                      onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
-                    >
-                      <Heart size={16} fill={wishlist.includes(product.id) ? 'currentColor' : 'none'} />
-                    </button>
-                  </div>
-                  <div className="product-body">
-                    <div className="product-cat">{product.category}</div>
-                    <h3 className="product-name">{product.name}</h3>
-                    <div className="product-price-row">
-                      <div className="product-price">
-                        {product.oldPrice && <span className="old-price">S/ {product.oldPrice.toFixed(2)}</span>}
-                        S/ {product.price.toFixed(2)}
+            {loading ? (
+              <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--color-text-light)' }}>
+                <div style={{ width: '40px', height: '40px', border: '3px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }}></div>
+                <p>Cargando catálogo...</p>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '80px 20px', background: 'var(--color-cream)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--color-gold)', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ fontSize: '3.5rem', marginBottom: '16px', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}>✨</div>
+                <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-burgundy)', fontSize: '2rem', marginBottom: '12px' }}>Próximamente</h3>
+                <p style={{ color: 'var(--color-text-light)', fontSize: '1.05rem', maxWidth: '400px', margin: '0 auto', lineHeight: '1.6' }}>
+                  Estamos preparando una colección increíble para esta sección. ¡Vuelve pronto para descubrir nuestras nuevas prendas y accesorios traídos desde la India!
+                </p>
+              </div>
+            ) : (
+              <div className="product-grid">
+                {filteredProducts.map((product, index) => (
+                  <article 
+                    className="product-card" 
+                    key={`${product.id}-${product.name}-${index}`}
+                    onClick={() => setSelectedItem(product)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="product-img-wrap">
+                      <img src={product.img} alt={product.name} loading="lazy" />
+                      {product.hennaNotice && (
+                        <div className="badge-notice">⚠️ Solo venta de productos — No incluye aplicación</div>
+                      )}
+                      <div className="product-overlay">
+                        <button className="overlay-btn" onClick={(e) => { e.stopPropagation(); addToCart(product); }}><ShoppingCart size={18} /></button>
+                        <button className="overlay-btn" onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}><Heart size={18} /></button>
                       </div>
-                      <button className="quick-add-btn" onClick={(e) => { e.stopPropagation(); addToCart(product); }}><Plus size={18}/></button>
+                      {product.badge && <span className={`product-badge ${product.badgeClass}`}>{product.badge}</span>}
+                      <button 
+                        className={`wishlist-btn ${wishlist.includes(product.id) ? 'active' : ''}`} 
+                        onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
+                      >
+                        <Heart size={16} fill={wishlist.includes(product.id) ? 'currentColor' : 'none'} />
+                      </button>
                     </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+                    <div className="product-body">
+                      <div className="product-cat">{product.category}</div>
+                      <h3 className="product-name">{product.name}</h3>
+                      <div className="product-price-row">
+                        <div className="product-price">
+                          {product.oldPrice && <span className="old-price">S/ {product.oldPrice.toFixed(2)}</span>}
+                          S/ {product.price.toFixed(2)}
+                        </div>
+                        <button className="quick-add-btn" onClick={(e) => { e.stopPropagation(); addToCart(product); }}><Plus size={18}/></button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
