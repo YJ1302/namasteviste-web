@@ -716,13 +716,13 @@ h4, h5, h6  { font-family: var(--font-alt); font-weight: 600; line-height: 1.3; 
   background: linear-gradient(135deg, var(--color-burgundy-dk), var(--color-burgundy));
   border-radius: var(--radius-lg);
   padding: 28px 36px;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  margin-bottom: 48px;
   box-shadow: var(--shadow-md);
   position: relative;
   overflow: hidden;
+  margin-bottom: 48px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
 }
 .presale-banner::before {
   content: '';
@@ -756,22 +756,20 @@ h4, h5, h6  { font-family: var(--font-alt); font-weight: 600; line-height: 1.3; 
   margin-bottom: 6px;
 }
 .presale-banner-text p {
-  color: rgba(255,255,255,.82);
-  font-size: 0.9rem;
-  line-height: 1.5;
+  color: rgba(255,255,255,.8);
+  font-size: 1.05rem;
+  line-height: 1.6;
 }
-.presale-banner-text .highlight-gold {
-  color: var(--color-gold-lt);
-  font-weight: 600;
-}
+.highlight-gold { color: var(--color-gold); font-weight: 700; }
 
-/* Menu Tabs */
 .menu-tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 36px;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 40px;
   flex-wrap: wrap;
 }
+
 .menu-tab {
   padding: 10px 22px;
   border-radius: var(--radius-pill);
@@ -2086,6 +2084,12 @@ h4, h5, h6  { font-family: var(--font-alt); font-weight: 600; line-height: 1.3; 
 }
 
 @media (max-width: 768px) {
+  .logo-sub { display: none; }
+  .logo-main { font-size: 1.1rem; }
+  .logo-class { height: 40px !important; }
+  .header-actions { gap: 4px; }
+  .icon-btn { width: 36px; height: 36px; }
+
   .two-worlds-grid { grid-template-columns: 1fr; }
   .testimonials-grid { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr; gap: 28px; }
@@ -2140,6 +2144,9 @@ h4, h5, h6  { font-family: var(--font-alt); font-weight: 600; line-height: 1.3; 
   position: relative;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .item-modal-close {
@@ -2171,6 +2178,7 @@ h4, h5, h6  { font-family: var(--font-alt); font-weight: 600; line-height: 1.3; 
   display: grid;
   grid-template-columns: 1fr 1fr;
   min-height: 400px;
+  overflow-y: auto;
 }
 
 .item-modal-img-container {
