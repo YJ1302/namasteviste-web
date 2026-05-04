@@ -341,8 +341,8 @@ export default function CheckoutModal({ isOpen, onClose }) {
       setSubmitStep(1);
       
       const minimumDelay = new Promise(resolve => {
-        setTimeout(() => setSubmitStep(2), 1500);
-        setTimeout(resolve, 3000);
+        setTimeout(() => setSubmitStep(2), 2000);
+        setTimeout(resolve, 4000);
       });
 
       const backendWork = async () => {
@@ -414,7 +414,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
       {isSubmitting && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(253, 250, 246, 0.75)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+          background: 'rgba(253, 250, 246, 0.98)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           zIndex: 2147483647,
           pointerEvents: 'all'
