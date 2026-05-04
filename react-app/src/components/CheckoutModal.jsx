@@ -410,32 +410,34 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
   if (!isOpen) return null;
 
   return (
-    <div id="checkout-overlay" className="open" role="dialog" aria-modal="true" aria-label="Finalizar pedido">
-      <div className="checkout-modal" style={isSubmitting ? { overflow: 'hidden', position: 'relative' } : { position: 'relative' }}>
-        {isSubmitting && (
-          <div style={{
-            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(253, 250, 246, 0.85)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            zIndex: 9999, borderRadius: 'var(--radius-xl)'
-          }}>
-            {submitStep === 1 || submitStep === 0 ? (
-              <div style={{ textAlign: 'center' }}>
-                <img src="/images/food-tray.gif" alt="Registrando orden" style={{ width: 140, height: 140, marginBottom: 20, animation: 'popIn 0.4s ease-out' }} />
-                <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-burgundy)', fontSize: '1.5rem', animation: 'fadeIn 0.4s ease-out' }}>Registrando tu orden...</h3>
-                <p style={{ color: 'var(--color-text-light)', marginTop: 8, animation: 'fadeIn 0.6s ease-out' }}>Preparando todo en la base de datos.</p>
-              </div>
-            ) : submitStep === 2 ? (
-              <div style={{ textAlign: 'center' }}>
-                <img src="/images/healthy-meal.gif" alt="Preparando recibo" style={{ width: 140, height: 140, marginBottom: 20, animation: 'popIn 0.4s ease-out' }} />
-                <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-burgundy)', fontSize: '1.5rem', animation: 'fadeIn 0.4s ease-out' }}>Generando tu recibo...</h3>
-                <p style={{ color: 'var(--color-text-light)', marginTop: 8, animation: 'fadeIn 0.6s ease-out' }}>Te conectaremos con WhatsApp en un instante.</p>
-              </div>
-            ) : null}
-          </div>
-        )}
+    <>
+      {isSubmitting && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(253, 250, 246, 0.75)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          zIndex: 2147483647,
+          pointerEvents: 'all'
+        }}>
+          {submitStep === 1 || submitStep === 0 ? (
+            <div style={{ textAlign: 'center' }}>
+              <img src="/images/food-tray.gif" alt="Listing details" style={{ width: 180, height: 180, objectFit: 'contain', marginBottom: 24, animation: 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }} />
+              <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-burgundy)', fontSize: '2rem', animation: 'fadeIn 0.5s ease-out' }}>Listing your order details...</h3>
+              <p style={{ color: 'var(--color-text)', marginTop: 12, fontSize: '1.1rem', animation: 'fadeIn 0.7s ease-out' }}>Adding Indian spices to your request</p>
+            </div>
+          ) : submitStep === 2 ? (
+            <div style={{ textAlign: 'center' }}>
+              <img src="/images/healthy-meal.gif" alt="Preparing receipt" style={{ width: 180, height: 180, objectFit: 'contain', marginBottom: 24, animation: 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }} />
+              <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-burgundy)', fontSize: '2rem', animation: 'fadeIn 0.5s ease-out' }}>Preparing your WhatsApp receipt...</h3>
+              <p style={{ color: 'var(--color-text)', marginTop: 12, fontSize: '1.1rem', animation: 'fadeIn 0.7s ease-out' }}>Connecting with the kitchen</p>
+            </div>
+          ) : null}
+        </div>
+      )}
 
-        <div className="checkout-header">
+      <div id="checkout-overlay" className="open" role="dialog" aria-modal="true" aria-label="Finalizar pedido" style={isSubmitting ? { pointerEvents: 'none' } : {}}>
+        <div className="checkout-modal">
+          <div className="checkout-header">
           <h2>Finalizar Pedido</h2>
           <button className="close-checkout" onClick={handleClose} aria-label="Cerrar checkout" disabled={isSubmitting}>
             <X size={20} />
@@ -727,5 +729,6 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
         )}
       </div>
     </div>
+    </>
   );
 }
