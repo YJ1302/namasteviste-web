@@ -12,6 +12,28 @@ export default function FoodMenu() {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
+  
+  const [showAnimation, setShowAnimation] = useState(true);
+  const [animationStep, setAnimationStep] = useState(0);
+
+  const animationData = [
+    { text: 'Recolectando ingredientes frescos...', img: '/images/gathering.gif' },
+    { text: 'Añadiendo especias de la India...', img: '/images/spices.gif' },
+    { text: 'Preparando con mucho amor...', img: '/images/gathering.gif' }
+  ];
+
+  useEffect(() => {
+    // 3 seconds animation sequence
+    const timer1 = setTimeout(() => setAnimationStep(1), 1000);
+    const timer2 = setTimeout(() => setAnimationStep(2), 2000);
+    const timer3 = setTimeout(() => setShowAnimation(false), 3000);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
+  }, []);
 
   useEffect(() => {
     const loadMenu = async () => {
@@ -55,19 +77,33 @@ export default function FoodMenu() {
           </div>
         </div>
 
-        <div className="menu-tabs">
-          {['todos', 'platos', 'entradas', 'postres'].map(tab => (
-            <button 
-              key={tab}
-              className={`menu-tab ${activeTab === tab ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
+        {showAnimation ? (
+          <div className="cooking-animation-container">
+            <img 
+              key={`img-${animationStep}`} 
+              src={animationData[animationStep].img} 
+              alt="Cooking animation" 
+              className="cooking-gif" 
+            />
+            <h3 key={`text-${animationStep}`} className="cooking-text">
+              {animationData[animationStep].text}
+            </h3>
+          </div>
+        ) : (
+          <>
+            <div className="menu-tabs">
+              {['todos', 'platos', 'entradas', 'postres'].map(tab => (
+                <button 
+                  key={tab}
+                  className={`menu-tab ${activeTab === tab ? 'active' : ''}`}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
 
-        <div className="menu-grid">
+            <div className="menu-grid">
           {filteredItems.map((item, index) => (
             <article 
               className="menu-card" 
@@ -106,6 +142,8 @@ export default function FoodMenu() {
             </article>
           ))}
         </div>
+        </>
+        )}
       </div>
 
       {selectedItem && (
