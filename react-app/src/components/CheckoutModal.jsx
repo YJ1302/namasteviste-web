@@ -58,8 +58,8 @@ function MapUpdater({ center }) {
   return null;
 }
 
-export default function CheckoutModal({ isOpen, onClose }) {
-  const { cart, cartTotal, hasFood, clearCart } = useCart();
+export default function CheckoutModal({ isOpen, onClose, todosLosProductos = [] }) {
+  const { cart, cartTotal, hasFood, clearCart, addToCart } = useCart();
   const [deliveryType, setDeliveryType] = useState('pickup');
   const [selectedDate, setSelectedDate] = useState('');
   const [availableDates, setAvailableDates] = useState([]);
@@ -72,8 +72,27 @@ export default function CheckoutModal({ isOpen, onClose }) {
   const [telefonoConsulta, setTelefonoConsulta] = useState('');
   const [puntosDisponibles, setPuntosDisponibles] = useState(0);
   const [clienteVerificado, setClienteVerificado] = useState(false);
-  const [premioSeleccionado, setPremioSeleccionado] = useState(null);
+  const [premiosSeleccionados, setPremiosSeleccionados] = useState([]);
   const [isVerifyingPoints, setIsVerifyingPoints] = useState(false);
+
+  // Estados para upsell y UI
+  const [toastMessage, setToastMessage] = useState('');
+  const [itemDetalleModal, setItemDetalleModal] = useState(null);
+  const [upsellItems, setUpsellItems] = useState([]);
+
+  useEffect(() => {
+    if (isOpen && todosLosProductos && todosLosProductos.length > 0) {
+      const lowCost = todosLosProductos.filter(p => parseFloat(p.price) <= 35);
+      const pool = lowCost.length >= 3 ? lowCost : todosLosProductos;
+      const shuffled = [...pool].sort(() => 0.5 - Math.random());
+      setUpsellItems(shuffled.slice(0, 3));
+    }
+  }, [isOpen, todosLosProductos]);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 2000);
+  };
 
   // Estados para geocodificación y mapa
   const [searchQuery, setSearchQuery] = useState('');
@@ -254,11 +273,15 @@ export default function CheckoutModal({ isOpen, onClose }) {
     );
   }
 
+  const puntosGastados = premiosSeleccionados.reduce((sum, p) => sum + p.costo, 0);
+  const puntosRestantes = puntosDisponibles - puntosGastados;
+
   const finalTotal = cartTotal + (deliveryType === 'delivery' ? shippingCost : 0);
 
   let totalPagar = finalTotal;
-  if (premioSeleccionado && premioSeleccionado.nombre.includes('Descuento de S/ 25')) {
-    totalPagar = Math.max(0, finalTotal - 25);
+  const descuentos = premiosSeleccionados.filter(p => p.nombre.includes('Descuento de S/ 25')).length;
+  if (descuentos > 0) {
+    totalPagar = Math.max(0, finalTotal - (25 * descuentos));
   }
 
   const puntosGanadosEnEstaOrden = cart.reduce((total, item) => {
@@ -311,12 +334,12 @@ export default function CheckoutModal({ isOpen, onClose }) {
 
     const telefonoIngresado = formData.get('phone');
 
-    const puntosGastados = premioSeleccionado ? premioSeleccionado.costo : 0;
-    const nuevoTotalPuntosCalculado = puntosDisponibles - puntosGastados + puntosGanadosEnEstaOrden;
+    const nuevoTotalPuntosCalculado = puntosRestantes + puntosGanadosEnEstaOrden;
 
     let articulosStr = articulos;
-    if (premioSeleccionado && !premioSeleccionado.nombre.includes('Descuento de S/ 25')) {
-      articulosStr += `, ${premioSeleccionado.nombre} (Premio Canjeado)`;
+    const premiosFisicos = premiosSeleccionados.filter(p => !p.nombre.includes('Descuento de S/ 25'));
+    if (premiosFisicos.length > 0) {
+      articulosStr += `, ${premiosFisicos.map(p => `${p.nombre} (Premio)`).join(', ')}`;
     }
 
     const pedidoData = {
@@ -364,8 +387,8 @@ export default function CheckoutModal({ isOpen, onClose }) {
       const gpsLinkStr = deliveryType === 'delivery' ? `\n*Dirección:* ${pedidoData.Direccion}\n*Ubicación GPS:* ${mapLink}` : '';
       
       let premioTexto = '';
-      if (premioSeleccionado) {
-        premioTexto = `\n🎁 Premio canjeado: ${premioSeleccionado.nombre} (-${premioSeleccionado.costo} pts)`;
+      if (premiosSeleccionados.length > 0) {
+        premioTexto = `\n🎁 Premios canjeados:\n${premiosSeleccionados.map(p => `  - ${p.nombre} (-${p.costo} pts)`).join('\n')}`;
       }
 
       let mensaje = `¡Hola Namas-te-vistes! Acabo de registrar un pedido en la web.
@@ -380,7 +403,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
  Total a pagar: S/ ${totalPagar.toFixed(2)}`;
 
       if (puntosGanadosEnEstaOrden > 0 || puntosGastados > 0) {
-        mensaje += `\n\n🌟 Con esta compra ganaste ${puntosGanadosEnEstaOrden} puntos. Tu saldo total actualizado es de ${nuevoTotalPuntos} puntos.`;
+        mensaje += `\n\n🌟 Con esta compra ganaste ${puntosGanadosEnEstaOrden} puntos. Gastaste ${puntosGastados} puntos en premios. Tu saldo total actualizado es de ${nuevoTotalPuntos} puntos.`;
       }
 
       mensaje += `\n\n(Nota: Este pedido ya se encuentra registrado en el sistema bajo el código ${generatedId}. Los totales y disponibilidad están sujetos a verificación en la base de datos.)`;
@@ -476,43 +499,79 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
                     </div>
                   ) : (
                     <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                         <div style={{ fontWeight: 600, color: 'var(--color-dark)' }}>
-                          Tus Puntos: <span style={{ color: 'var(--color-gold)', fontSize: '1.2rem' }}>{puntosDisponibles}</span>
+                          Puntos Restantes: <span style={{ color: 'var(--color-gold)', fontSize: '1.2rem' }}>{puntosRestantes}</span>
                         </div>
-                        <button type="button" onClick={() => {setClienteVerificado(false); setPremioSeleccionado(null);}} style={{ background: 'none', border: 'none', color: 'var(--color-burgundy)', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}>
+                        <button type="button" onClick={() => {setClienteVerificado(false); setPremiosSeleccionados([]);}} style={{ background: 'none', border: 'none', color: 'var(--color-burgundy)', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}>
                           Cambiar número
                         </button>
                       </div>
                       
-                      {puntosDisponibles > 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '4px' }}>Elige un premio (opcional):</p>
-                          <select 
-                            className="form-control" 
-                            value={premioSeleccionado ? premioSeleccionado.id : ''} 
-                            onChange={(e) => {
-                              if (!e.target.value) {
-                                setPremioSeleccionado(null);
-                              } else {
-                                setPremioSeleccionado(CATALOGO_PREMIOS.find(p => p.id === e.target.value));
-                              }
-                            }}
-                          >
-                            <option value="">No canjear nada hoy</option>
-                            {CATALOGO_PREMIOS.map(premio => (
-                              <option key={premio.id} value={premio.id} disabled={puntosDisponibles < premio.costo}>
-                                {premio.nombre} ({premio.costo} pts)
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      ) : (
-                        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', margin: 0 }}>No tienes puntos suficientes para canjear hoy.</p>
-                      )}
+                      <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '12px' }}>Elige tus premios:</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        {CATALOGO_PREMIOS.map(premio => {
+                          const isAffordable = puntosRestantes >= premio.costo;
+                          return (
+                            <div key={premio.id} style={{
+                              background: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '12px',
+                              opacity: isAffordable ? 1 : 0.5, display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'space-between'
+                            }}>
+                              <div>
+                                <h4 style={{ fontSize: '0.85rem', margin: 0, color: 'var(--color-dark)', lineHeight: 1.2 }}>{premio.nombre}</h4>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--color-gold)', fontWeight: 600 }}>{premio.costo} pts</span>
+                              </div>
+                              <button
+                                type="button"
+                                disabled={!isAffordable}
+                                onClick={() => {
+                                  setPremiosSeleccionados([...premiosSeleccionados, premio]);
+                                  showToast('¡Premio canjeado!');
+                                }}
+                                style={{ background: 'var(--color-burgundy)', color: 'white', border: 'none', padding: '6px', borderRadius: '4px', cursor: isAffordable ? 'pointer' : 'not-allowed', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              >
+                                + Canjear
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
+
+                {upsellItems.length > 0 && (
+                  <>
+                    <div className="checkout-section-title">Aprovecha el envío</div>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '12px' }}>Agrega estos productos a tu orden:</p>
+                    <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '24px' }}>
+                      {upsellItems.map(item => (
+                        <div key={item.id} style={{
+                          minWidth: '140px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', display: 'flex', flexDirection: 'column', cursor: 'pointer'
+                        }} onClick={() => setItemDetalleModal(item)}>
+                          <img src={item.img || '/images/default_food.png'} alt={item.name} style={{ width: '100%', height: '100px', objectFit: 'cover' }} />
+                          <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1 }}>
+                            <div>
+                              <h4 style={{ fontSize: '0.8rem', margin: 0, color: 'var(--color-dark)', lineHeight: 1.2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.name}</h4>
+                              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-light)', fontWeight: 600 }}>S/ {parseFloat(item.price).toFixed(2)}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                addToCart(item);
+                                showToast('¡Agregado al carrito!');
+                              }}
+                              style={{ background: 'var(--color-burgundy)', color: 'white', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, marginTop: '8px' }}
+                            >
+                              + Agregar
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
 
                 <div className="checkout-section-title">Tus Datos</div>
                 <div className="form-group">
@@ -692,12 +751,21 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
                 </div>
               )}
 
-              {premioSeleccionado && (
-                <div className="order-summary-item" style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed var(--color-border)', color: 'var(--color-gold)', fontWeight: 600 }}>
-                  <span className="order-item-name">🎁 {premioSeleccionado.nombre} (Canje)</span>
-                  <span className="order-item-price">{premioSeleccionado.nombre.includes('Descuento de S/ 25') ? '- S/ 25.00' : 'GRATIS'}</span>
+              {premiosSeleccionados.map((premio, idx) => (
+                <div key={`premio-${idx}`} className="order-summary-item" style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed var(--color-border)', color: 'var(--color-gold)', fontWeight: 600 }}>
+                  <span className="order-item-name">🎁 {premio.nombre} (Canje)</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="order-item-price">{premio.nombre.includes('Descuento de S/ 25') ? '- S/ 25.00' : 'GRATIS'}</span>
+                    <button type="button" onClick={() => {
+                      const newPremios = [...premiosSeleccionados];
+                      newPremios.splice(idx, 1);
+                      setPremiosSeleccionados(newPremios);
+                    }} style={{ background: 'none', border: 'none', color: '#ff4d4f', cursor: 'pointer', padding: 0 }}>
+                      <X size={14} />
+                    </button>
+                  </div>
                 </div>
-              )}
+              ))}
               
               <div className="order-total-row" style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
                 <span>Total</span>
@@ -729,6 +797,42 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
         )}
       </div>
     </div>
+
+      {itemDetalleModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999999, display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center' }} onClick={() => setItemDetalleModal(null)}>
+          <div style={{ background: '#fff', borderRadius: 'var(--radius-md)', maxWidth: '400px', width: '90%', overflow: 'hidden', position: 'relative' }} onClick={e => e.stopPropagation()}>
+            <img src={itemDetalleModal.img || '/images/default_food.png'} alt={itemDetalleModal.name} style={{ width: '100%', height: '250px', objectFit: 'cover' }} />
+            <div style={{ padding: '20px' }}>
+              <h3 style={{ margin: '0 0 10px 0', color: 'var(--color-burgundy)', fontFamily: 'var(--font-display)' }}>{itemDetalleModal.name}</h3>
+              <p style={{ color: 'var(--color-text)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0 0 20px 0' }}>{itemDetalleModal.desc || 'Sin descripción disponible.'}</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--color-dark)' }}>S/ {parseFloat(itemDetalleModal.price).toFixed(2)}</span>
+                <button onClick={() => {
+                  addToCart(itemDetalleModal);
+                  setItemDetalleModal(null);
+                  showToast('¡Agregado al carrito!');
+                }} className="btn btn-primary btn-sm">
+                  Añadir al carrito
+                </button>
+              </div>
+            </div>
+            <button onClick={() => setItemDetalleModal(null)} style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {toastMessage && (
+        <div style={{
+          position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)',
+          background: 'var(--color-burgundy)', color: 'white', padding: '12px 24px',
+          borderRadius: '30px', zIndex: 9999999, fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          animation: 'fadeIn 0.3s ease-out'
+        }}>
+          {toastMessage}
+        </div>
+      )}
     </>
   );
 }
