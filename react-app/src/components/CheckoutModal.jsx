@@ -422,14 +422,14 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
           {submitStep === 1 || submitStep === 0 ? (
             <div style={{ textAlign: 'center' }}>
               <img src="/images/food-tray.gif" alt="Listing details" style={{ width: 180, height: 180, objectFit: 'contain', marginBottom: 24, animation: 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }} />
-              <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-burgundy)', fontSize: '2rem', animation: 'fadeIn 0.5s ease-out' }}>Listing your order details...</h3>
-              <p style={{ color: 'var(--color-text)', marginTop: 12, fontSize: '1.1rem', animation: 'fadeIn 0.7s ease-out' }}>Adding Indian spices to your request</p>
+              <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-burgundy)', fontSize: '2rem', animation: 'fadeIn 0.5s ease-out' }}>Alistando los detalles de su pedido...</h3>
+              <p style={{ color: 'var(--color-text)', marginTop: 12, fontSize: '1.1rem', animation: 'fadeIn 0.7s ease-out' }}>Agregando especias indias a su pedido</p>
             </div>
           ) : submitStep === 2 ? (
             <div style={{ textAlign: 'center' }}>
               <img src="/images/healthy-meal.gif" alt="Preparing receipt" style={{ width: 180, height: 180, objectFit: 'contain', marginBottom: 24, animation: 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }} />
-              <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-burgundy)', fontSize: '2rem', animation: 'fadeIn 0.5s ease-out' }}>Preparing your WhatsApp receipt...</h3>
-              <p style={{ color: 'var(--color-text)', marginTop: 12, fontSize: '1.1rem', animation: 'fadeIn 0.7s ease-out' }}>Connecting with the kitchen</p>
+              <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-burgundy)', fontSize: '2rem', animation: 'fadeIn 0.5s ease-out' }}>Preparando su recibo de WhatsApp...</h3>
+              <p style={{ color: 'var(--color-text)', marginTop: 12, fontSize: '1.1rem', animation: 'fadeIn 0.7s ease-out' }}>¡Conectando con la cocina</p>
             </div>
           ) : null}
         </div>
