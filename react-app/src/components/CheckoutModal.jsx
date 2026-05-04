@@ -411,15 +411,15 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
 
   return (
     <div id="checkout-overlay" className="open" role="dialog" aria-modal="true" aria-label="Finalizar pedido">
-      <div className="checkout-modal" style={isSubmitting ? { overflow: 'hidden' } : {}}>
-        {isSubmitting && submitStep > 0 && (
+      <div className="checkout-modal" style={isSubmitting ? { overflow: 'hidden', position: 'relative' } : { position: 'relative' }}>
+        {isSubmitting && (
           <div style={{
             position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(253, 250, 246, 0.85)', backdropFilter: 'blur(8px)',
+            background: 'rgba(253, 250, 246, 0.85)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            zIndex: 9999, borderRadius: 'var(--radius-md)'
+            zIndex: 9999, borderRadius: 'var(--radius-xl)'
           }}>
-            {submitStep === 1 ? (
+            {submitStep === 1 || submitStep === 0 ? (
               <div style={{ textAlign: 'center' }}>
                 <img src="/images/food-tray.gif" alt="Registrando orden" style={{ width: 140, height: 140, marginBottom: 20, animation: 'popIn 0.4s ease-out' }} />
                 <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-burgundy)', fontSize: '1.5rem', animation: 'fadeIn 0.4s ease-out' }}>Registrando tu orden...</h3>
