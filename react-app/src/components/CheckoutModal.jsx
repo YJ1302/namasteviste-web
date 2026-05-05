@@ -512,6 +512,21 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                         {CATALOGO_PREMIOS.map(premio => {
                           const isAffordable = puntosRestantes >= premio.costo;
+                          
+                          // Buscamos la imagen real en la base de datos si existe el producto
+                          let displayImg = premio.img;
+                          if (premio.id !== 'p4') {
+                            const match = todosLosProductos.find(p => 
+                              premio.nombre.toLowerCase().includes(p.name.toLowerCase()) || 
+                              (premio.nombre.toLowerCase().includes('gulab') && p.name.toLowerCase().includes('gulab')) ||
+                              (premio.nombre.toLowerCase().includes('henna') && p.name.toLowerCase().includes('henna')) ||
+                              (premio.nombre.toLowerCase().includes('aretes') && p.name.toLowerCase().includes('aretes'))
+                            );
+                            if (match && match.img) {
+                              displayImg = match.img;
+                            }
+                          }
+
                           return (
                             <div key={premio.id} style={{
                               background: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '8px',
@@ -519,8 +534,8 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
                               overflow: 'hidden'
                             }}>
                               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                {premio.img && (
-                                  <img src={premio.img} alt={premio.nombre} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }} />
+                                {displayImg && (
+                                  <img src={displayImg} alt={premio.nombre} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }} />
                                 )}
                                 <div>
                                   <h4 style={{ fontSize: '0.85rem', margin: 0, color: 'var(--color-dark)', lineHeight: 1.2 }}>{premio.nombre}</h4>
