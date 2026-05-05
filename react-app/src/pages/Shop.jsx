@@ -18,7 +18,7 @@ export default function Shop() {
     setAddedItems(prev => ({ ...prev, [item.id]: true }));
     setTimeout(() => {
       setAddedItems(prev => ({ ...prev, [item.id]: false }));
-    }, 1500);
+    }, 5000);
   };
 
   useEffect(() => {
@@ -111,7 +111,7 @@ export default function Shop() {
                         <div style={{ position: 'relative' }}>
                           <button className="overlay-btn" onClick={(e) => handleAddToCart(e, product)}><ShoppingCart size={18} /></button>
                           {addedItems[product.id] && (
-                            <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px', background: 'var(--color-burgundy)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap', animation: 'fadeIn 0.2s ease-out', zIndex: 10 }}>
+                            <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px', background: '#43A047', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap', animation: 'fadeIn 0.2s ease-out', zIndex: 10 }}>
                               ¡Agregado!
                             </div>
                           )}
@@ -137,7 +137,7 @@ export default function Shop() {
                         <div style={{ position: 'relative' }}>
                           <button className="quick-add-btn" onClick={(e) => handleAddToCart(e, product)}><Plus size={18}/></button>
                           {addedItems[product.id] && (
-                            <div style={{ position: 'absolute', bottom: '100%', right: '0', marginBottom: '8px', background: 'var(--color-burgundy)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap', animation: 'fadeIn 0.2s ease-out' }}>
+                            <div style={{ position: 'absolute', bottom: '100%', right: '0', marginBottom: '8px', background: '#43A047', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap', animation: 'fadeIn 0.2s ease-out' }}>
                               ¡Agregado!
                             </div>
                           )}

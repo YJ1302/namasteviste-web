@@ -23,7 +23,7 @@ export default function FoodMenu() {
     setAddedItems(prev => ({ ...prev, [item.id]: true }));
     setTimeout(() => {
       setAddedItems(prev => ({ ...prev, [item.id]: false }));
-    }, 1500);
+    }, 5000);
   };
 
   const animationData = [
@@ -144,7 +144,7 @@ export default function FoodMenu() {
                         <Plus size={20} />
                       </button>
                       {addedItems[item.id] && (
-                        <div style={{ position: 'absolute', bottom: '100%', right: '0', marginBottom: '8px', background: 'var(--color-burgundy)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap', animation: 'fadeIn 0.2s ease-out' }}>
+                        <div style={{ position: 'absolute', bottom: '100%', right: '0', marginBottom: '8px', background: '#43A047', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap', animation: 'fadeIn 0.2s ease-out' }}>
                           ¡Agregado!
                         </div>
                       )}
