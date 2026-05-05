@@ -62,6 +62,7 @@ export default function CheckoutModal({ isOpen, onClose, todosLosProductos = [] 
   const { cart, cartTotal, hasFood, clearCart, addToCart } = useCart();
   const [deliveryType, setDeliveryType] = useState('pickup');
   const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
   const [availableDates, setAvailableDates] = useState([]);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -321,6 +322,11 @@ export default function CheckoutModal({ isOpen, onClose, todosLosProductos = [] 
       return;
     }
 
+    if (hasFood && selectedDate && !selectedTime) {
+      alert('Por favor selecciona un horario de entrega para tu pedido de comida.');
+      return;
+    }
+
     setIsSubmitting(true);
     const formData = new FormData(e.target);
     const articulos = cart.map(item => `${item.name} (x${item.qty})`).join(', ');
@@ -351,7 +357,7 @@ export default function CheckoutModal({ isOpen, onClose, todosLosProductos = [] 
         ? 'Recojo en tienda' 
         : `${formData.get('addressReference') || searchQuery} (GPS: ${mapLink})`,
       Metodo_Entrega: deliveryType,
-      Dia_Entrega: hasFood ? selectedDate : 'N/A',
+      Dia_Entrega: hasFood ? `${selectedDate} (${selectedTime})` : 'N/A',
       Articulos_Comprados: articulosStr,
       Total: totalPagar.toFixed(2),
       Estado: 'Pendiente'
@@ -385,6 +391,7 @@ export default function CheckoutModal({ isOpen, onClose, todosLosProductos = [] 
       
       const metodoTexto = deliveryType === 'pickup' ? 'Recojo en tienda' : 'Envío a domicilio';
       const gpsLinkStr = deliveryType === 'delivery' ? `\n*Dirección:* ${pedidoData.Direccion}\n*Ubicación GPS:* ${mapLink}` : '';
+      const fechaEntregaStr = hasFood ? `\n*Fecha y Hora:* ${selectedDate} (${selectedTime})` : '';
       
       let premioTexto = '';
       if (premiosSeleccionados.length > 0) {
@@ -395,7 +402,7 @@ export default function CheckoutModal({ isOpen, onClose, todosLosProductos = [] 
 
  CÓDIGO DE PEDIDO: ${generatedId}
  Cliente: ${pedidoData.Nombre_Cliente} 
- Método: ${metodoTexto}${gpsLinkStr}
+ Método: ${metodoTexto}${gpsLinkStr}${fechaEntregaStr}
 
  Mi Pedido:
 ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
@@ -727,22 +734,60 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
 
                 {hasFood && (
                   <div className="date-picker-section">
-                    <div className="date-picker-label">
-                      📅 Selecciona tu fecha de entrega
+                    <div className="date-picker-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>📅 Selecciona tu fecha de entrega</span>
+                      {selectedDate && (
+                        <button type="button" onClick={() => { setSelectedDate(''); setSelectedTime(''); }} style={{ background: 'none', border: 'none', color: 'var(--color-burgundy)', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}>
+                          Cambiar fecha
+                        </button>
+                      )}
                     </div>
-                    <p style={{ fontSize: '.75rem', color: 'var(--color-text-light)', marginBottom: 10 }}>Solo disponible sábados y domingos</p>
+                    {!selectedDate && (
+                      <p style={{ fontSize: '.75rem', color: 'var(--color-text-light)', marginBottom: 10 }}>Solo disponible sábados y domingos</p>
+                    )}
                     <div className="date-options">
-                      {availableDates.map(date => (
+                      {selectedDate ? (
                         <button 
                           type="button"
-                          key={date.value}
-                          className={`date-option ${selectedDate === date.value ? 'selected' : ''}`}
-                          onClick={() => setSelectedDate(date.value)}
+                          className="date-option selected"
+                          style={{ width: '100%', cursor: 'default' }}
                         >
-                          {date.label}
+                          {availableDates.find(d => d.value === selectedDate)?.label || selectedDate}
                         </button>
-                      ))}
+                      ) : (
+                        availableDates.map(date => (
+                          <button 
+                            type="button"
+                            key={date.value}
+                            className={`date-option ${selectedDate === date.value ? 'selected' : ''}`}
+                            onClick={() => setSelectedDate(date.value)}
+                          >
+                            {date.label}
+                          </button>
+                        ))
+                      )}
                     </div>
+
+                    {selectedDate && (
+                      <div className="time-picker-section" style={{ marginTop: 16, animation: 'fadeIn 0.3s ease-out' }}>
+                        <div className="date-picker-label" style={{ fontSize: '0.9rem', marginBottom: '8px', fontWeight: 600, color: 'var(--color-dark)' }}>
+                          ⏰ Selecciona tu horario
+                        </div>
+                        <div className="date-options" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                          {['12:00 PM - 02:00 PM', '02:00 PM - 04:00 PM', '04:00 PM - 06:00 PM', '06:00 PM - 08:00 PM'].map(time => (
+                            <button
+                              type="button"
+                              key={time}
+                              className={`date-option ${selectedTime === time ? 'selected' : ''}`}
+                              onClick={() => setSelectedTime(time)}
+                              style={{ padding: '8px 4px', fontSize: '0.85rem' }}
+                            >
+                              {time}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
