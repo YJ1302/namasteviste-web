@@ -10,6 +10,16 @@ export default function Shop() {
   const [shopProducts, setShopProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [addedItems, setAddedItems] = useState({});
+
+  const handleAddToCart = (e, item) => {
+    e.stopPropagation();
+    addToCart(item);
+    setAddedItems(prev => ({ ...prev, [item.id]: true }));
+    setTimeout(() => {
+      setAddedItems(prev => ({ ...prev, [item.id]: false }));
+    }, 1500);
+  };
 
   useEffect(() => {
     const loadShop = async () => {
@@ -98,7 +108,14 @@ export default function Shop() {
                         <div className="badge-notice">⚠️ Solo venta de productos — No incluye aplicación</div>
                       )}
                       <div className="product-overlay">
-                        <button className="overlay-btn" onClick={(e) => { e.stopPropagation(); addToCart(product); }}><ShoppingCart size={18} /></button>
+                        <div style={{ position: 'relative' }}>
+                          <button className="overlay-btn" onClick={(e) => handleAddToCart(e, product)}><ShoppingCart size={18} /></button>
+                          {addedItems[product.id] && (
+                            <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px', background: 'var(--color-burgundy)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap', animation: 'fadeIn 0.2s ease-out', zIndex: 10 }}>
+                              ¡Agregado!
+                            </div>
+                          )}
+                        </div>
                         <button className="overlay-btn" onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}><Heart size={18} /></button>
                       </div>
                       {product.badge && <span className={`product-badge ${product.badgeClass}`}>{product.badge}</span>}
@@ -117,7 +134,14 @@ export default function Shop() {
                           {product.oldPrice && <span className="old-price">S/ {product.oldPrice.toFixed(2)}</span>}
                           S/ {product.price.toFixed(2)}
                         </div>
-                        <button className="quick-add-btn" onClick={(e) => { e.stopPropagation(); addToCart(product); }}><Plus size={18}/></button>
+                        <div style={{ position: 'relative' }}>
+                          <button className="quick-add-btn" onClick={(e) => handleAddToCart(e, product)}><Plus size={18}/></button>
+                          {addedItems[product.id] && (
+                            <div style={{ position: 'absolute', bottom: '100%', right: '0', marginBottom: '8px', background: 'var(--color-burgundy)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap', animation: 'fadeIn 0.2s ease-out' }}>
+                              ¡Agregado!
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </article>

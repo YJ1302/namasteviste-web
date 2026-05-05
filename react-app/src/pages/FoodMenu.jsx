@@ -15,6 +15,16 @@ export default function FoodMenu() {
   
   const [showAnimation, setShowAnimation] = useState(true);
   const [animationStep, setAnimationStep] = useState(0);
+  const [addedItems, setAddedItems] = useState({});
+
+  const handleAddToCart = (e, item) => {
+    e.stopPropagation();
+    addToCart(item);
+    setAddedItems(prev => ({ ...prev, [item.id]: true }));
+    setTimeout(() => {
+      setAddedItems(prev => ({ ...prev, [item.id]: false }));
+    }, 1500);
+  };
 
   const animationData = [
     { text: 'Recolectando ingredientes frescos...', img: '/images/gathering.gif' },
@@ -125,13 +135,20 @@ export default function FoodMenu() {
                     S/ {item.price.toFixed(2)}
                   </div>
                   {isOrderingOpen ? (
-                    <button 
-                      className="add-to-cart-btn" 
-                      onClick={(e) => { e.stopPropagation(); addToCart(item); }} 
-                      aria-label="Añadir a carrito"
-                    >
-                      <Plus size={20} />
-                    </button>
+                    <div style={{ position: 'relative' }}>
+                      <button 
+                        className="add-to-cart-btn" 
+                        onClick={(e) => handleAddToCart(e, item)} 
+                        aria-label="Añadir a carrito"
+                      >
+                        <Plus size={20} />
+                      </button>
+                      {addedItems[item.id] && (
+                        <div style={{ position: 'absolute', bottom: '100%', right: '0', marginBottom: '8px', background: 'var(--color-burgundy)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap', animation: 'fadeIn 0.2s ease-out' }}>
+                          ¡Agregado!
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <button className="add-to-cart-btn" disabled style={{ background: '#d1d1d1', color: '#6e6e6e', cursor: 'not-allowed', width: 'auto', padding: '0 16px', fontSize: '0.85rem', fontWeight: 600 }}>
                       Cerrado
