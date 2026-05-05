@@ -15,7 +15,7 @@ export default function Admin() {
   const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: '', Puntos_Otorgados: ''
+    ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: '', Puntos_Otorgados: '', Tipo_Dieta: ''
   });
 
   useEffect(() => {
@@ -49,7 +49,8 @@ export default function Admin() {
           Categoria: formData.Categoria,
           Imagen_URL: formData.Imagen_URL,
           Activo: formData.Activo,
-          Puntos_Otorgados: formData.Puntos_Otorgados
+          Puntos_Otorgados: formData.Puntos_Otorgados,
+          Tipo_Dieta: formData.Tipo_Dieta
         };
         if (isEditing) {
           await sheetsService.updateFoodMenu(formData.ID, payload);
@@ -85,7 +86,7 @@ export default function Admin() {
       }
       setShowForm(false);
       setIsEditing(false);
-      setFormData({ ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: '', Puntos_Otorgados: '' });
+      setFormData({ ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: '', Puntos_Otorgados: '', Tipo_Dieta: '' });
       fetchData(); // Recargar datos
     } catch (error) {
       alert('Error guardando los datos.');
@@ -102,7 +103,8 @@ export default function Admin() {
       Imagen_URL: item.Imagen_URL || item.img || '',
       Activo: item.Activo !== undefined ? item.Activo : 'VERDADERO',
       Stock: item.Stock || item.stock || '',
-      Puntos_Otorgados: item.Puntos_Otorgados || ''
+      Puntos_Otorgados: item.Puntos_Otorgados || '',
+      Tipo_Dieta: item.Tipo_Dieta || item.dietType || ''
     });
     setIsEditing(true);
     setShowForm(true);
@@ -176,7 +178,7 @@ export default function Admin() {
           </h1>
           <button className="btn btn-primary btn-sm" onClick={() => {
             setIsEditing(false);
-            setFormData({ ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: '', Puntos_Otorgados: '' });
+            setFormData({ ID: '', Nombre: '', Descripcion: '', Precio: '', Categoria: '', Imagen_URL: '', Activo: 'VERDADERO', Stock: '', Puntos_Otorgados: '', Tipo_Dieta: '' });
             setShowForm(true);
           }}>
             <Plus size={16} /> Añadir {activeTab === 'menu' ? 'Platillo' : activeTab === 'shop' ? 'Producto' : 'Fondo'}
@@ -222,10 +224,17 @@ export default function Admin() {
                 <input required type="text" name="Imagen_URL" placeholder="URL directa de la Imagen (ej. https://... o /images/...)" value={formData.Imagen_URL} onChange={handleInputChange} className="form-control" />
                 
                 {activeTab === 'menu' && (
-                  <select name="Activo" value={formData.Activo} onChange={handleInputChange} className="form-control">
-                    <option value="VERDADERO">Activo: Sí</option>
-                    <option value="FALSO">Activo: No</option>
-                  </select>
+                  <>
+                    <select name="Tipo_Dieta" value={formData.Tipo_Dieta} onChange={handleInputChange} className="form-control">
+                      <option value="">Cualquiera</option>
+                      <option value="Vegetariano">Vegetariano</option>
+                      <option value="No Vegetariano">No Vegetariano</option>
+                    </select>
+                    <select name="Activo" value={formData.Activo} onChange={handleInputChange} className="form-control">
+                      <option value="VERDADERO">Activo: Sí</option>
+                      <option value="FALSO">Activo: No</option>
+                    </select>
+                  </>
                 )}
                 
                 {activeTab === 'shop' && (
@@ -251,6 +260,7 @@ export default function Admin() {
                   {activeTab !== 'backgrounds' && (
                     <>
                       <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>{activeTab === 'menu' ? 'Activo' : 'Stock'}</th>
+                      {activeTab === 'menu' && <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Dieta</th>}
                       <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Precio</th>
                       <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Puntos</th>
                     </>
@@ -283,6 +293,11 @@ export default function Admin() {
                         <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--color-text)' }}>
                           {activeTab === 'menu' ? (item.Activo || 'VERDADERO') : (item.Stock || item.stock)}
                         </td>
+                        {activeTab === 'menu' && (
+                          <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--color-text)' }}>
+                            {item.Tipo_Dieta || '-'}
+                          </td>
+                        )}
                         <td style={{ padding: '14px 20px', fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-burgundy)' }}>S/ {parseFloat(item.Precio || item.price || 0).toFixed(2)}</td>
                         <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--color-gold)', fontWeight: 'bold' }}>{item.Puntos_Otorgados || 0}</td>
                       </>

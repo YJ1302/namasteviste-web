@@ -9,6 +9,7 @@ export default function FoodMenu() {
   const { addToCart } = useCart();
   const { isOrderingOpen } = useOrderWindow();
   const [activeTab, setActiveTab] = useState('todos');
+  const [dietFilter, setDietFilter] = useState('all');
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -58,7 +59,8 @@ export default function FoodMenu() {
         category: (item.Categoria || '').toLowerCase(),
         type: 'food',
         rating: 4.8, // Default rating for simplicity
-        Puntos_Otorgados: parseInt(item.Puntos_Otorgados, 10) || 0
+        Puntos_Otorgados: parseInt(item.Puntos_Otorgados, 10) || 0,
+        dietType: item.Tipo_Dieta || ''
       }));
       setMenuItems(formattedData);
       setLoading(false);
@@ -66,7 +68,11 @@ export default function FoodMenu() {
     loadMenu();
   }, []);
 
-  const filteredItems = activeTab === 'todos' ? menuItems : menuItems.filter(i => i.category === activeTab);
+  const filteredItems = menuItems.filter(i => {
+    const matchTab = activeTab === 'todos' || i.category === activeTab;
+    const matchDiet = dietFilter === 'all' ? true : (dietFilter === 'Vegetariano' ? i.dietType === 'Vegetariano' : i.dietType !== 'Vegetariano');
+    return matchTab && matchDiet;
+  });
 
   return (
     <section id="menu-section" className="section">
@@ -111,6 +117,27 @@ export default function FoodMenu() {
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
+            </div>
+
+            <div className="menu-diet-toggle" style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px' }}>
+              <button
+                onClick={() => setDietFilter('all')}
+                style={{ background: dietFilter === 'all' ? 'var(--color-burgundy)' : '#e0e0e0', color: dietFilter === 'all' ? 'white' : '#333', border: 'none', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', transition: 'all 0.3s ease' }}
+              >
+                Todos
+              </button>
+              <button
+                onClick={() => setDietFilter('Vegetariano')}
+                style={{ background: dietFilter === 'Vegetariano' ? '#43A047' : '#e0e0e0', color: dietFilter === 'Vegetariano' ? 'white' : '#333', border: 'none', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', transition: 'all 0.3s ease' }}
+              >
+                Vegetariano 🥬
+              </button>
+              <button
+                onClick={() => setDietFilter('No Vegetariano')}
+                style={{ background: dietFilter === 'No Vegetariano' ? '#E53935' : '#e0e0e0', color: dietFilter === 'No Vegetariano' ? 'white' : '#333', border: 'none', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', transition: 'all 0.3s ease' }}
+              >
+                No Vegetariano 🥩
+              </button>
             </div>
 
             <div className="menu-grid">
