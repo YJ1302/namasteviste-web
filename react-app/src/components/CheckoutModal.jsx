@@ -41,10 +41,10 @@ const getBusinessLocation = (link) => {
 const BUSINESS_LOCATION = getBusinessLocation(BUSINESS_MAPS_LINK); 
 
 const CATALOGO_PREMIOS = [
-  { id: 'p1', nombre: '1 Porción de Gulab Jamun', costo: 60 },
-  { id: 'p2', nombre: '1 Cono de Henna Natural', costo: 100 },
-  { id: 'p3', nombre: 'Aretes Sorpresa', costo: 150 },
-  { id: 'p4', nombre: 'Descuento de S/ 25', costo: 250 }
+  { id: 'p1', nombre: '1 Porción de Gulab Jamun', costo: 60, img: 'https://images.unsplash.com/photo-1596797038530-2c107229654b?w=400&q=80' },
+  { id: 'p2', nombre: '1 Cono de Henna Natural', costo: 100, img: '/images/henna_products.png' },
+  { id: 'p3', nombre: 'Aretes Sorpresa', costo: 150, img: '/images/indian_jewelry.png' },
+  { id: 'p4', nombre: 'Descuento de S/ 25', costo: 250, img: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&q=80' }
 ];
 
 // Componente auxiliar para actualizar el centro del mapa dinámicamente
@@ -514,12 +514,18 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
                           const isAffordable = puntosRestantes >= premio.costo;
                           return (
                             <div key={premio.id} style={{
-                              background: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '12px',
-                              opacity: isAffordable ? 1 : 0.5, display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'space-between'
+                              background: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '8px',
+                              opacity: isAffordable ? 1 : 0.5, display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'space-between',
+                              overflow: 'hidden'
                             }}>
-                              <div>
-                                <h4 style={{ fontSize: '0.85rem', margin: 0, color: 'var(--color-dark)', lineHeight: 1.2 }}>{premio.nombre}</h4>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--color-gold)', fontWeight: 600 }}>{premio.costo} pts</span>
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                {premio.img && (
+                                  <img src={premio.img} alt={premio.nombre} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }} />
+                                )}
+                                <div>
+                                  <h4 style={{ fontSize: '0.85rem', margin: 0, color: 'var(--color-dark)', lineHeight: 1.2 }}>{premio.nombre}</h4>
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--color-gold)', fontWeight: 600 }}>{premio.costo} pts</span>
+                                </div>
                               </div>
                               <button
                                 type="button"
