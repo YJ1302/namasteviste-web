@@ -17,6 +17,7 @@ export default function FoodMenu() {
   const [showAnimation, setShowAnimation] = useState(true);
   const [animationStep, setAnimationStep] = useState(0);
   const [addedItems, setAddedItems] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleAddToCart = (e, item) => {
     e.stopPropagation();
@@ -68,10 +69,48 @@ export default function FoodMenu() {
     loadMenu();
   }, []);
 
+  // Simulated Natural Language Search mapping
+  const foodKeywords = {
+    'picante': ['platos', 'entradas'],
+    'dulce': ['postres'],
+    'postre': ['postres'],
+    'pollo': ['platos', 'entradas'],
+    'snack': ['entradas']
+  };
+
+  const getSearchCategories = (query) => {
+    if (!query) return null;
+    const lowerQuery = query.toLowerCase();
+    let categories = new Set();
+    
+    Object.keys(foodKeywords).forEach(key => {
+      if (lowerQuery.includes(key)) {
+        foodKeywords[key].forEach(cat => categories.add(cat));
+      }
+    });
+    
+    return categories.size > 0 ? Array.from(categories) : null;
+  };
+
   const filteredItems = menuItems.filter(i => {
     const matchTab = activeTab === 'todos' || i.category === activeTab;
     const matchDiet = dietFilter === 'all' ? true : (dietFilter === 'Vegetariano' ? i.dietType === 'Vegetariano' : i.dietType !== 'Vegetariano');
-    return matchTab && matchDiet;
+    
+    if (!matchTab || !matchDiet) return false;
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const lowerQuery = searchQuery.toLowerCase();
+      const mappedCats = getSearchCategories(searchQuery);
+      
+      const matchesName = i.name.toLowerCase().includes(lowerQuery);
+      const matchesDesc = i.desc?.toLowerCase().includes(lowerQuery);
+      const matchesMappedCat = mappedCats && mappedCats.some(c => i.category.includes(c));
+      
+      if (!matchesName && !matchesDesc && !matchesMappedCat) return false;
+    }
+
+    return true;
   });
 
   return (
@@ -107,6 +146,19 @@ export default function FoodMenu() {
           </div>
         ) : (
           <>
+            <div style={{ maxWidth: '600px', margin: '0 auto 20px auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', background: 'white', borderRadius: '24px', padding: '6px 16px', border: '1px solid var(--color-border)', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>🤖</span>
+                <input 
+                  type="text" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Búsqueda Inteligente: Ej. algo picante, dulce, pollo..." 
+                  style={{ width: '100%', border: 'none', outline: 'none', fontSize: '0.95rem', padding: '8px 0' }}
+                />
+              </div>
+            </div>
+
             <div className="menu-tabs">
               {['todos', 'platos', 'entradas', 'postres'].map(tab => (
                 <button 
