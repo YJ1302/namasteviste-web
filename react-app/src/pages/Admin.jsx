@@ -39,13 +39,19 @@ export default function Admin() {
 
   const convertDriveLink = (url) => {
     if (!url) return url;
-    const match1 = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-    if (match1 && match1[1]) return `https://drive.google.com/uc?export=view&id=${match1[1]}`;
+    const urls = url.split(',').map(u => u.trim());
     
-    const match2 = url.match(/drive\.google\.com\/.*[?&]id=([a-zA-Z0-9_-]+)/);
-    if (match2 && match2[1]) return `https://drive.google.com/uc?export=view&id=${match2[1]}`;
+    const fixedUrls = urls.map(u => {
+      const match1 = u.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (match1 && match1[1]) return `https://drive.google.com/uc?export=view&id=${match1[1]}`;
+      
+      const match2 = u.match(/drive\.google\.com\/.*[?&]id=([a-zA-Z0-9_-]+)/);
+      if (match2 && match2[1]) return `https://drive.google.com/uc?export=view&id=${match2[1]}`;
 
-    return url;
+      return u;
+    });
+
+    return fixedUrls.join(', ');
   };
 
   const handleSubmit = async (e) => {
@@ -234,7 +240,7 @@ export default function Admin() {
                   </>
                 )}
                 
-                <input required type="text" name="Imagen_URL" placeholder="URL directa de Imagen o Enlace de Google Drive" value={formData.Imagen_URL} onChange={handleInputChange} className="form-control" />
+                <input required type="text" name="Imagen_URL" placeholder="URLs separadas por coma (Drive o Web)" value={formData.Imagen_URL} onChange={handleInputChange} className="form-control" />
                 
                 {activeTab === 'menu' && (
                   <>

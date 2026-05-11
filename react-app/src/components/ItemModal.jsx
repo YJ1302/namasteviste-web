@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
-import { X, Plus } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const ItemModal = ({ item, onClose, onAddToCart, isOrderingOpen = true }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = 'auto'; };
@@ -16,8 +17,31 @@ const ItemModal = ({ item, onClose, onAddToCart, isOrderingOpen = true }) => {
           <X size={24} />
         </button>
         <div className="item-modal-layout">
-          <div className="item-modal-img-container">
-            <img src={item.img} alt={item.name} loading="lazy" />
+          <div className="item-modal-img-container" style={{ position: 'relative' }}>
+            {item.images && item.images.length > 1 ? (
+              <>
+                <img src={item.images[currentImageIndex]} alt={item.name} loading="lazy" />
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => prev === 0 ? item.images.length - 1 : prev - 1); }}
+                  style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }}
+                >
+                  <ChevronLeft size={20} color="var(--color-burgundy)" />
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => prev === item.images.length - 1 ? 0 : prev + 1); }}
+                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.8)', border: 'none', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }}
+                >
+                  <ChevronRight size={20} color="var(--color-burgundy)" />
+                </button>
+                <div style={{ position: 'absolute', bottom: 10, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 6 }}>
+                  {item.images.map((_, idx) => (
+                    <div key={idx} style={{ width: 8, height: 8, borderRadius: '50%', background: idx === currentImageIndex ? 'var(--color-burgundy)' : 'rgba(255,255,255,0.6)', boxShadow: '0 1px 3px rgba(0,0,0,0.3)', transition: 'background 0.3s' }} />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <img src={item.img} alt={item.name} loading="lazy" />
+            )}
           </div>
           <div className="item-modal-details">
             <div className="item-modal-category">{item.category}</div>

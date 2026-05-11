@@ -2,19 +2,26 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwdXAwKepmKMq1pWbujzfvr
 
 const fixDriveUrls = (url) => {
   if (!url) return url;
-  let id = null;
-  const match1 = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (match1 && match1[1]) id = match1[1];
-  else {
-    const match2 = url.match(/drive\.google\.com\/.*[?&]id=([a-zA-Z0-9_-]+)/);
-    if (match2 && match2[1]) id = match2[1];
-  }
+  
+  // Soporte para múltiples URLs separadas por coma
+  const urls = url.split(',').map(u => u.trim());
+  
+  const fixedUrls = urls.map(u => {
+    let id = null;
+    const match1 = u.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (match1 && match1[1]) id = match1[1];
+    else {
+      const match2 = u.match(/drive\.google\.com\/.*[?&]id=([a-zA-Z0-9_-]+)/);
+      if (match2 && match2[1]) id = match2[1];
+    }
 
-  if (id) {
-    // Usar el endpoint de thumbnail que evita los bloqueos de CORS y cookies de Google
-    return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
-  }
-  return url;
+    if (id) {
+      return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+    }
+    return u;
+  });
+
+  return fixedUrls.join(', ');
 };
 
 const cleanAndDeduplicate = (data) => {

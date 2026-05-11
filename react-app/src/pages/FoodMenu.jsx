@@ -55,7 +55,8 @@ export default function FoodMenu() {
         name: item.Nombre,
         desc: item.Descripcion,
         price: parseFloat(item.Precio) || 0,
-        img: item.Imagen_URL || '/images/default_food.png',
+        images: item.Imagen_URL ? item.Imagen_URL.split(',').map(u => u.trim()) : ['/images/default_food.png'],
+        img: item.Imagen_URL ? item.Imagen_URL.split(',')[0].trim() : '/images/default_food.png',
         category: (item.Categoria || '').toLowerCase(),
         type: 'food',
         rating: 4.8, // Default rating for simplicity
