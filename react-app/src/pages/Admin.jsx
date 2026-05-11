@@ -37,6 +37,25 @@ export default function Admin() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleImageUrlChange = (index, value) => {
+    const urls = formData.Imagen_URL ? formData.Imagen_URL.split(',').map(u => u.trim()) : [''];
+    urls[index] = value;
+    setFormData({ ...formData, Imagen_URL: urls.join(', ') });
+  };
+
+  const addImageUrlField = () => {
+    const urls = formData.Imagen_URL ? formData.Imagen_URL.split(',').map(u => u.trim()) : [''];
+    urls.push('');
+    setFormData({ ...formData, Imagen_URL: urls.join(', ') });
+  };
+
+  const removeImageUrlField = (index) => {
+    const urls = formData.Imagen_URL ? formData.Imagen_URL.split(',').map(u => u.trim()) : [''];
+    urls.splice(index, 1);
+    if (urls.length === 0) urls.push('');
+    setFormData({ ...formData, Imagen_URL: urls.join(', ') });
+  };
+
   const convertDriveLink = (url) => {
     if (!url) return url;
     const urls = url.split(',').map(u => u.trim());
@@ -240,7 +259,30 @@ export default function Admin() {
                   </>
                 )}
                 
-                <input required type="text" name="Imagen_URL" placeholder="URLs separadas por coma (Drive o Web)" value={formData.Imagen_URL} onChange={handleInputChange} className="form-control" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Imágenes del Producto</label>
+                  {(formData.Imagen_URL ? formData.Imagen_URL.split(',').map(u => u.trim()) : ['']).map((url, index) => (
+                    <div key={index} style={{ display: 'flex', gap: '8px' }}>
+                      <input 
+                        required={index === 0}
+                        type="text" 
+                        placeholder={index === 0 ? "URL de Imagen Principal (Drive o Web)" : "URL de Imagen Adicional"}
+                        value={url} 
+                        onChange={(e) => handleImageUrlChange(index, e.target.value)} 
+                        className="form-control" 
+                        style={{ flex: 1 }}
+                      />
+                      {index > 0 && (
+                        <button type="button" onClick={() => removeImageUrlField(index)} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '4px', padding: '0 12px', cursor: 'pointer', color: 'var(--color-burgundy)' }}>
+                          <X size={16} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button type="button" onClick={addImageUrlField} style={{ alignSelf: 'flex-start', background: 'transparent', border: '1px dashed var(--color-border)', borderRadius: '4px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-text)' }}>
+                    <Plus size={14} /> Añadir otra imagen
+                  </button>
+                </div>
                 
                 {activeTab === 'menu' && (
                   <>
