@@ -308,95 +308,91 @@ export default function Admin() {
           </div>
         )}
 
-        <div style={{ background: 'var(--color-white)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', overflow: 'hidden' }}>
+        <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
           {loading ? (
-            <div style={{ padding: '32px', textAlign: 'center' }}>Cargando datos...</div>
+            <div style={{ padding: '32px', textAlign: 'center', background: 'var(--color-white)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>Cargando datos...</div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead style={{ background: 'var(--color-cream)' }}>
-                <tr>
-                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>ID</th>
-                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>{activeTab === 'backgrounds' ? 'Imagen' : 'Nombre'}</th>
-                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>{activeTab === 'backgrounds' ? 'URL' : 'Categoría'}</th>
-                  {activeTab !== 'backgrounds' && (
-                    <>
-                      <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>{activeTab === 'menu' ? 'Activo' : 'Stock'}</th>
-                      {activeTab === 'menu' && <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Dieta</th>}
-                      <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Precio</th>
-                      <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Puntos</th>
-                    </>
-                  )}
-                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--color-border)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-light)' }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentItems.map((item, index) => (
-                  <tr key={`${item.ID || item.id}-${activeTab}-${index}`} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                    <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--color-text)' }}>{item.ID || item.id}</td>
-                    <td style={{ padding: '14px 20px', fontSize: '0.9rem', fontWeight: 500, color: 'var(--color-dark)' }}>
-                      {activeTab === 'backgrounds' ? (
-                        <img src={item.Imagen_URL} alt="bg" style={{ width: '80px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
-                      ) : (
-                        item.Nombre || item.name
-                      )}
-                    </td>
-                    <td style={{ padding: '14px 20px' }}>
-                      {activeTab === 'backgrounds' ? (
-                        <span style={{ fontSize: '0.8rem', color: 'var(--color-text)' }}>{item.Imagen_URL}</span>
-                      ) : (
-                        <span style={{ fontSize: '0.75rem', background: 'var(--color-cream-dk)', padding: '4px 8px', borderRadius: 'var(--radius-pill)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          <Tag size={12} /> {item.Categoria || item.category}
-                        </span>
-                      )}
-                    </td>
-                    {activeTab !== 'backgrounds' && (
-                      <>
-                        <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--color-text)' }}>
-                          {activeTab === 'menu' ? (item.Activo || 'VERDADERO') : (item.Stock || item.stock)}
-                        </td>
-                        {activeTab === 'menu' && (
-                          <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--color-text)' }}>
-                            {item.Tipo_Dieta || '-'}
-                          </td>
-                        )}
-                        <td style={{ padding: '14px 20px', fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-burgundy)' }}>S/ {parseFloat(item.Precio || item.price || 0).toFixed(2)}</td>
-                        <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--color-gold)', fontWeight: 'bold' }}>{item.Puntos_Otorgados || 0}</td>
-                      </>
-                    )}
-                    <td style={{ padding: '14px 20px' }}>
-                      <button 
-                        onClick={() => handleEdit(item)}
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-burgundy)', padding: '4px' }}
-                        title="Editar"
-                      >
-                        <Edit2 size={18} />
-                      </button>
-                      {activeTab === 'backgrounds' && (
-                        <button 
-                          onClick={async () => {
-                            if (window.confirm('¿Seguro de borrar este fondo?')) {
-                              await sheetsService.deleteBackground(item.ID);
-                              fetchData();
-                            }
-                          }}
-                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-text-light)', padding: '4px', marginLeft: '8px' }}
-                          title="Eliminar"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {currentItems.length === 0 && (
-                  <tr>
-                    <td colSpan="6" style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-light)' }}>
-                      No hay items en esta sección.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            <>
+              {currentItems.length === 0 ? (
+                <div style={{ padding: '32px', textAlign: 'center', color: 'var(--color-text-light)', background: 'var(--color-white)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
+                  No hay items en esta sección.
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                  {currentItems.map((item, index) => {
+                    const imageUrls = item.Imagen_URL ? item.Imagen_URL.split(',').map(u => u.trim()) : [];
+                    const coverImage = imageUrls.length > 0 ? imageUrls[0] : '/images/default_shop.png';
+
+                    return (
+                      <div key={`${item.ID || item.id}-${activeTab}-${index}`} style={{ background: 'var(--color-white)', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--color-border)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ position: 'relative', height: '200px', background: '#f8f8f8' }}>
+                          <img src={coverImage} alt={item.Nombre || item.name || 'bg'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', gap: '8px' }}>
+                            <button onClick={() => handleEdit(item)} style={{ background: 'var(--color-white)', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)', color: 'var(--color-burgundy)' }} title="Editar">
+                              <Edit2 size={18} />
+                            </button>
+                            <button onClick={async () => {
+                              if (window.confirm('¿Seguro de borrar este elemento? Esta acción no se puede deshacer.')) {
+                                if (activeTab === 'menu') await sheetsService.deleteFoodMenu(item.ID);
+                                else if (activeTab === 'shop') await sheetsService.deleteShopInventory(item.ID);
+                                else await sheetsService.deleteBackground(item.ID);
+                                fetchData();
+                              }
+                            }} style={{ background: 'var(--color-white)', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.15)', color: '#E53935' }} title="Eliminar">
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                          {activeTab !== 'backgrounds' && (
+                            <div style={{ position: 'absolute', bottom: 12, left: 12, background: 'var(--color-cream-dk)', padding: '4px 12px', borderRadius: 'var(--radius-pill)', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                              <Tag size={12} /> {item.Categoria || item.category}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                          {activeTab === 'backgrounds' ? (
+                            <>
+                              <h3 style={{ fontSize: '1rem', margin: '0 0 8px 0', color: 'var(--color-dark)' }}>Fondo Hero</h3>
+                              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-light)', wordBreak: 'break-all' }}>ID: {item.ID}</span>
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                                <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--color-dark)', fontWeight: 600, lineHeight: 1.2 }}>{item.Nombre || item.name}</h3>
+                                <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--color-burgundy)' }}>S/ {parseFloat(item.Precio || item.price || 0).toFixed(2)}</span>
+                              </div>
+                              
+                              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', flex: 1, margin: '0 0 16px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.4 }}>
+                                {item.Descripcion || item.desc || "Sin descripción"}
+                              </p>
+
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', padding: '12px 0 0 0', borderTop: '1px solid var(--color-border)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-text)' }}>
+                                  {activeTab === 'menu' ? (
+                                    <>
+                                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: (item.Activo === 'VERDADERO' || item.Activo === true) ? '#43A047' : '#E53935' }} />
+                                      {item.Activo === 'VERDADERO' || item.Activo === true ? 'Activo' : 'Inactivo'}
+                                      {item.Tipo_Dieta && <span style={{marginLeft: 8, color: 'var(--color-text-light)'}}>({item.Tipo_Dieta})</span>}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Box size={14} /> Stock: <strong style={{color: parseInt(item.Stock || item.stock) > 0 ? 'var(--color-text)' : '#E53935'}}>{item.Stock || item.stock}</strong>
+                                    </>
+                                  )}
+                                </div>
+                                <div style={{ color: 'var(--color-gold)', fontWeight: 600 }}>
+                                  💎 {item.Puntos_Otorgados || 0}
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>

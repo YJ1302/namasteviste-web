@@ -103,6 +103,15 @@ export const sheetsService = {
     }
   },
 
+  deleteFoodMenu: async (id) => {
+    try {
+      return await postData('deleteMenu', {}, id);
+    } catch (error) {
+      console.error('Error deleting food menu item:', error);
+      throw error;
+    }
+  },
+
   // ----- INVENTARIO TIENDA -----
 
   getAllShopInventory: async () => {
@@ -144,6 +153,15 @@ export const sheetsService = {
       return await postData('updateShop', itemData, id);
     } catch (error) {
       console.error('Error updating shop item:', error);
+      throw error;
+    }
+  },
+
+  deleteShopInventory: async (id) => {
+    try {
+      return await postData('deleteShop', {}, id);
+    } catch (error) {
+      console.error('Error deleting shop item:', error);
       throw error;
     }
   },
