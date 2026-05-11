@@ -80,12 +80,14 @@ export default function CheckoutModal({ isOpen, onClose, todosLosProductos = [] 
   const [toastMessage, setToastMessage] = useState('');
   const [itemDetalleModal, setItemDetalleModal] = useState(null);
   const [upsellItems, setUpsellItems] = useState([]);
-  const [isAiLoadingUpsell, setIsAiLoadingUpsell] = useState(false);
 
   useEffect(() => {
-    const fetchAiRecommendations = async () => {
-      if (!isOpen || !todosLosProductos || todosLosProductos.length === 0) return;
-      
+    if (isOpen && todosLosProductos && todosLosProductos.length > 0) {
+      let recommended = [];
+      const hasFoodInCart = cart.some(item => item.type === 'food' || item.category?.includes('comida') || item.category?.includes('snack'));
+      const hasShopInCart = cart.some(item => item.type === 'shop' || item.category?.includes('henna') || item.category?.includes('joya'));
+
+      // Avoid recommending what's already in the cart
       const cartIds = cart.map(i => String(i.id));
       const availableToRecommend = todosLosProductos.filter(p => !cartIds.includes(String(p.id)));
 
@@ -94,86 +96,25 @@ export default function CheckoutModal({ isOpen, onClose, todosLosProductos = [] 
         return;
       }
 
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      
-      if (!apiKey || cart.length === 0) {
-        // Fallback: rule-based
-        let recommended = [];
-        const hasFoodInCart = cart.some(item => item.type === 'food' || item.category?.includes('comida') || item.category?.includes('snack'));
-        const hasShopInCart = cart.some(item => item.type === 'shop' || item.category?.includes('henna') || item.category?.includes('joya'));
-
-        if (hasFoodInCart && !hasShopInCart) {
-          recommended = availableToRecommend.filter(p => p.type === 'food' && (p.name.toLowerCase().includes('gulab') || parseFloat(p.price) <= 20));
-        } else if (hasShopInCart && !hasFoodInCart) {
-          recommended = availableToRecommend.filter(p => p.type === 'shop' && parseFloat(p.price) <= 30);
-        } else {
-          recommended = availableToRecommend.filter(p => parseFloat(p.price) <= 25);
-        }
-
-        if (recommended.length < 3) {
-          // Si no hay suficientes baratos, completamos con cualquiera que no esté repetido
-          recommended = [...recommended, ...availableToRecommend.filter(p => !recommended.find(r => r.id === p.id))];
-        }
-
-        const shuffled = recommended.sort(() => 0.5 - Math.random());
-        setUpsellItems(shuffled.slice(0, 3));
-        return;
+      if (hasFoodInCart && !hasShopInCart) {
+        // Recommend more food (sweets or cheap snacks)
+        recommended = availableToRecommend.filter(p => p.type === 'food' && (p.name.toLowerCase().includes('gulab') || parseFloat(p.price) <= 20));
+      } else if (hasShopInCart && !hasFoodInCart) {
+        // Recommend matching jewelry or henna
+        recommended = availableToRecommend.filter(p => p.type === 'shop' && parseFloat(p.price) <= 30);
+      } else {
+        // Mixed or empty: recommend popular cheap items
+        recommended = availableToRecommend.filter(p => parseFloat(p.price) <= 25);
       }
 
-      // API Gemini Upsell Logic
-      setIsAiLoadingUpsell(true);
-      try {
-        const cartStr = cart.map(i => `${i.name} (Categoría: ${i.category})`).join(', ');
-        const catalogStr = availableToRecommend.map(p => `ID: ${p.id} | Nombre: ${p.name} | Cat: ${p.category} | Precio: ${p.price}`).join('\n');
-
-        const prompt = `Eres el recomendador de productos de "Namas-te-vistes".
-El cliente tiene en su carrito: ${cartStr}.
-Este es el catálogo disponible (excluyendo lo que ya tiene):
-${catalogStr}
-
-Tu tarea: Selecciona los 3 productos que harían el MEJOR complemento. 
-Regla: Responde ÚNICAMENTE con un JSON Array plano de strings con los IDs exactos. Ejemplo: ["id1", "id2", "id3"]. No incluyas markdown, ni texto adicional, solo el arreglo JSON.`;
-
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }]
-          })
-        });
-
-        const data = await response.json();
-        const textResp = data.candidates[0].content.parts[0].text;
-        
-        const match = textResp.match(/\[.*\]/s);
-        if (match) {
-          const recommendedIds = JSON.parse(match[0]);
-          const finalItems = recommendedIds.map(id => availableToRecommend.find(p => String(p.id) === String(id))).filter(Boolean);
-          
-          if (finalItems.length > 0) {
-            // Completar si Gemini devuelve menos de 3
-            if (finalItems.length < 3) {
-              const remaining = availableToRecommend.filter(p => !finalItems.find(f => String(f.id) === String(p.id)));
-              finalItems.push(...remaining.sort(() => 0.5 - Math.random()).slice(0, 3 - finalItems.length));
-            }
-            setUpsellItems(finalItems.slice(0, 3));
-          } else {
-             throw new Error("IDs recomendados no encontrados en catálogo");
-          }
-        } else {
-          throw new Error("No se detectó un Array JSON en la respuesta");
-        }
-      } catch (err) {
-        console.error("Fallo el Upsell de IA:", err);
-        // Fallback random
-        const shuffled = availableToRecommend.sort(() => 0.5 - Math.random());
-        setUpsellItems(shuffled.slice(0, 3));
-      } finally {
-        setIsAiLoadingUpsell(false);
+      if (recommended.length < 3) {
+        // Si no hay suficientes baratos, completamos con cualquiera que no esté repetido
+        recommended = [...recommended, ...availableToRecommend.filter(p => !recommended.find(r => r.id === p.id))];
       }
-    };
 
-    fetchAiRecommendations();
+      const shuffled = recommended.sort(() => 0.5 - Math.random());
+      setUpsellItems(shuffled.slice(0, 3));
+    }
   }, [isOpen, todosLosProductos, cart]);
 
   const showToast = (msg) => {
@@ -654,21 +595,11 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
                   )}
                 </div>
 
-                {(upsellItems.length > 0 || isAiLoadingUpsell) && (
+                {upsellItems.length > 0 && (
                   <>
-                    <div className="checkout-section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      Aprovecha el envío {isAiLoadingUpsell ? <span style={{fontSize:'0.9rem', color:'var(--color-gold)'}}>🤖 Analizando tu carrito...</span> : '✨'}
-                    </div>
-                    {!isAiLoadingUpsell && <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '12px' }}>Nuestra IA sugiere agregar esto a tu orden:</p>}
-                    
-                    {isAiLoadingUpsell ? (
-                      <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '24px' }}>
-                        {[1, 2, 3].map(i => (
-                          <div key={i} style={{ minWidth: '140px', height: '170px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', animation: 'pulse 1.5s infinite ease-in-out' }}></div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '24px' }}>
+                    <div className="checkout-section-title">Aprovecha el envío</div>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginBottom: '12px' }}>Agrega estos productos a tu orden:</p>
+                    <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '24px' }}>
                       {upsellItems.map(item => (
                         <div key={item.id} style={{
                           minWidth: '140px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', display: 'flex', flexDirection: 'column', cursor: 'pointer'
@@ -693,8 +624,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
                           </div>
                         </div>
                       ))}
-                      </div>
-                    )}
+                    </div>
                   </>
                 )}
 

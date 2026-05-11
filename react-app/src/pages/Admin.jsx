@@ -37,9 +37,22 @@ export default function Admin() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const convertDriveLink = (url) => {
+    if (!url) return url;
+    const match1 = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (match1 && match1[1]) return `https://drive.google.com/uc?export=view&id=${match1[1]}`;
+    
+    const match2 = url.match(/drive\.google\.com\/.*[?&]id=([a-zA-Z0-9_-]+)/);
+    if (match2 && match2[1]) return `https://drive.google.com/uc?export=view&id=${match2[1]}`;
+
+    return url;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const finalImageUrl = convertDriveLink(formData.Imagen_URL);
+
       if (activeTab === 'menu') {
         const payload = {
           ID: formData.ID,
@@ -47,7 +60,7 @@ export default function Admin() {
           Descripcion: formData.Descripcion,
           Precio: formData.Precio,
           Categoria: formData.Categoria,
-          Imagen_URL: formData.Imagen_URL,
+          Imagen_URL: finalImageUrl,
           Activo: formData.Activo,
           Puntos_Otorgados: formData.Puntos_Otorgados,
           Tipo_Dieta: formData.Tipo_Dieta
@@ -65,7 +78,7 @@ export default function Admin() {
           Categoria: formData.Categoria,
           Precio: formData.Precio,
           Stock: formData.Stock,
-          Imagen_URL: formData.Imagen_URL,
+          Imagen_URL: finalImageUrl,
           Puntos_Otorgados: formData.Puntos_Otorgados
         };
         if (isEditing) {
@@ -76,7 +89,7 @@ export default function Admin() {
       } else if (activeTab === 'backgrounds') {
         const payload = {
           ID: formData.ID,
-          Imagen_URL: formData.Imagen_URL
+          Imagen_URL: finalImageUrl
         };
         if (isEditing) {
           await sheetsService.updateBackground(formData.ID, payload);
@@ -221,7 +234,7 @@ export default function Admin() {
                   </>
                 )}
                 
-                <input required type="text" name="Imagen_URL" placeholder="URL directa de la Imagen (ej. https://... o /images/...)" value={formData.Imagen_URL} onChange={handleInputChange} className="form-control" />
+                <input required type="text" name="Imagen_URL" placeholder="URL directa de Imagen o Enlace de Google Drive" value={formData.Imagen_URL} onChange={handleInputChange} className="form-control" />
                 
                 {activeTab === 'menu' && (
                   <>

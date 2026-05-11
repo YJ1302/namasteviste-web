@@ -18,74 +18,25 @@ export default function AIChatbot() {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const handleSend = async (e) => {
+  const handleSend = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     const userText = input.trim();
-    const newMessages = [...messages, { id: Date.now(), text: userText, sender: 'user' }];
-    setMessages(newMessages);
+    setMessages(prev => [...prev, { id: Date.now(), text: userText, sender: 'user' }]);
     setInput('');
     setIsTyping(true);
 
-    try {
-      const response = await generateAIResponse(userText, newMessages);
+    // Simulate AI response delay
+    setTimeout(() => {
+      const response = generateAIResponse(userText);
       setMessages(prev => [...prev, { id: Date.now(), text: response, sender: 'bot' }]);
-    } catch (error) {
-      console.error("Chatbot error:", error);
-      setMessages(prev => [...prev, { id: Date.now(), text: "Hubo un error de conexión. Escríbenos al WhatsApp por favor.", sender: 'bot' }]);
-    } finally {
       setIsTyping(false);
-    }
-  };
-
-  const generateAIResponse = async (text, history) => {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    
-    if (!apiKey) {
-      // Fallback a las reglas si no hay API key configurada
-      return new Promise(resolve => {
-        setTimeout(() => resolve(generateAIResponseFallback(text)), 1000);
-      });
-    }
-
-    try {
-      const systemInstruction = "Eres Namaste-Bot, un asistente de ventas amable, conciso y persuasivo de la tienda peruana 'Namas-te-vistes'. Vendes comida de la India (preventa semanal, entregas sábados y domingos), ropa importada de India, joyería y conos de henna natural (solo el producto). Haces envíos a toda Lima. Tienen programa de puntos. Responde de forma muy natural, breve (máximo 3 oraciones) y con emojis.";
-      
-      const contents = history.slice(0, -1).map(m => ({
-        role: m.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: m.text }]
-      }));
-      
-      contents.push({
-        role: 'user',
-        parts: [{ text }]
-      });
-
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemInstruction }]
-          },
-          contents: contents
-        })
-      });
-
-      const data = await response.json();
-      if (data.candidates && data.candidates[0].content.parts[0].text) {
-        return data.candidates[0].content.parts[0].text;
-      }
-      return generateAIResponseFallback(text);
-    } catch (err) {
-      console.error("Error llamando a Gemini:", err);
-      return generateAIResponseFallback(text);
-    }
+    }, 1500);
   };
 
   // Robust Rule-based simulated AI
-  const generateAIResponseFallback = (text) => {
+  const generateAIResponse = (text) => {
     // Normalizar texto (quitar tildes y pasar a minúsculas)
     const lower = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
