@@ -11,7 +11,6 @@ export default function Shop() {
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
   const [addedItems, setAddedItems] = useState({});
-  const [searchQuery, setSearchQuery] = useState('');
 
   const handleAddToCart = (e, item) => {
     e.stopPropagation();
@@ -43,45 +42,9 @@ export default function Shop() {
     loadShop();
   }, []);
 
-  // Simulated Natural Language Search mapping
-  const searchKeywords = {
-    'regalo': ['joya', 'ropa'],
-    'novia': ['joya', 'ropa', 'henna'],
-    'boda': ['henna', 'joya'],
-    'tatuaje': ['henna'],
-    'ropa': ['ropa'],
-    'vestido': ['ropa']
-  };
-
-  const getSearchCategories = (query) => {
-    if (!query) return null;
-    const lowerQuery = query.toLowerCase();
-    let categories = new Set();
-    
-    Object.keys(searchKeywords).forEach(key => {
-      if (lowerQuery.includes(key)) {
-        searchKeywords[key].forEach(cat => categories.add(cat));
-      }
-    });
-    
-    return categories.size > 0 ? Array.from(categories) : null;
-  };
-
   const filteredProducts = shopProducts.filter(p => {
     // Filter by active category
     if (activeFilter !== 'todos' && p.category !== activeFilter) return false;
-    
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const lowerQuery = searchQuery.toLowerCase();
-      const mappedCats = getSearchCategories(searchQuery);
-      
-      const matchesName = p.name.toLowerCase().includes(lowerQuery);
-      const matchesDesc = p.desc?.toLowerCase().includes(lowerQuery);
-      const matchesMappedCat = mappedCats && mappedCats.some(c => p.category.includes(c));
-      
-      if (!matchesName && !matchesDesc && !matchesMappedCat) return false;
-    }
     
     return true;
   });
@@ -97,17 +60,6 @@ export default function Shop() {
         <div className="shop-layout">
           {/* Sidebar */}
           <aside className="shop-sidebar">
-            <div className="sidebar-title">Búsqueda Inteligente 🤖</div>
-            <div style={{ marginBottom: '20px' }}>
-              <input 
-                type="text" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Ej: algo para regalo, tatuaje..." 
-                style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-border)', outline: 'none', fontSize: '0.9rem' }}
-              />
-            </div>
-
             <div className="sidebar-title">Filtrar por</div>
             <div className="filter-group">
               <div className="filter-options">
