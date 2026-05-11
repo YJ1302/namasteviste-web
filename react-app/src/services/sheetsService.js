@@ -1,5 +1,22 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbwdXAwKepmKMq1pWbujzfvrbQSy6vZROC-J_r-HKT8dOFawcX2c3xcTVF7idLImpTdZ5A/exec';
 
+const fixDriveUrls = (url) => {
+  if (!url) return url;
+  let id = null;
+  const match1 = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (match1 && match1[1]) id = match1[1];
+  else {
+    const match2 = url.match(/drive\.google\.com\/.*[?&]id=([a-zA-Z0-9_-]+)/);
+    if (match2 && match2[1]) id = match2[1];
+  }
+
+  if (id) {
+    // Usar el endpoint de thumbnail que evita los bloqueos de CORS y cookies de Google
+    return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+  }
+  return url;
+};
+
 const cleanAndDeduplicate = (data) => {
   if (!Array.isArray(data)) return [];
   const unique = [];
@@ -11,6 +28,9 @@ const cleanAndDeduplicate = (data) => {
     
     if (!seenNames.has(nameStr)) {
       seenNames.add(nameStr);
+      if (item.Imagen_URL) {
+        item.Imagen_URL = fixDriveUrls(item.Imagen_URL);
+      }
       unique.push(item);
     }
   }
