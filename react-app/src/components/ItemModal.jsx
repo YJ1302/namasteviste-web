@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Plus, ChevronLeft, ChevronRight, Gem, TriangleAlert } from 'lucide-react';
 
 const ItemModal = ({ item, onClose, onAddToCart, isOrderingOpen = true }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -53,12 +53,12 @@ const ItemModal = ({ item, onClose, onAddToCart, isOrderingOpen = true }) => {
             <p className="item-modal-description">{item.desc || "Sin descripción disponible."}</p>
             {item.Puntos_Otorgados > 0 && (
               <div className="item-modal-points">
-                💎 Otorga <strong>{item.Puntos_Otorgados} puntos</strong>
+                <Gem size={15} className="inline-icon" /> Otorga <strong>{item.Puntos_Otorgados} puntos</strong>
               </div>
             )}
             {item.hennaNotice && (
               <div className="badge-notice" style={{marginTop: '1rem', marginBottom: '1rem', padding: '12px', background: 'rgba(78,52,46,0.1)', color: 'var(--color-brown)', borderRadius: 'var(--radius-md)', fontSize: '0.85rem'}}>
-                ⚠️ Solo venta de productos — No incluye aplicación
+                <TriangleAlert size={14} className="inline-icon" /> Solo venta de productos — No incluye aplicación
               </div>
             )}
             <div className="item-modal-actions">

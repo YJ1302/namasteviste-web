@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCart } from '../context/CartContext';
-import { X, Check, Search, MapPin } from 'lucide-react';
+import { X, Check, Search, MapPin, Sparkles, Store, Truck, CalendarDays, Receipt, Gift, Info } from 'lucide-react';
 import { sheetsService } from '../services/sheetsService';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -422,7 +422,7 @@ export default function CheckoutModal({ isOpen, onClose, todosLosProductos = [] 
       
       let premioTexto = '';
       if (premiosSeleccionados.length > 0) {
-        premioTexto = `\n🎁 Premios canjeados:\n${premiosSeleccionados.map(p => `  - ${p.nombre} (-${p.costo} pts)`).join('\n')}`;
+        premioTexto = `\nPremios canjeados:\n${premiosSeleccionados.map(p => `  - ${p.nombre} (-${p.costo} pts)`).join('\n')}`;
       }
 
       let mensaje = `¡Hola Namas-te-vistes! Acabo de registrar un pedido en la web.
@@ -437,7 +437,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
  Total a pagar: S/ ${totalPagar.toFixed(2)}`;
 
       if (puntosGanadosEnEstaOrden > 0 || puntosGastados > 0) {
-        mensaje += `\n\n🌟 Con esta compra ganaste ${puntosGanadosEnEstaOrden} puntos. Gastaste ${puntosGastados} puntos en premios. Tu saldo total actualizado es de ${nuevoTotalPuntos} puntos.`;
+        mensaje += `\n\nCon esta compra ganaste ${puntosGanadosEnEstaOrden} puntos. Gastaste ${puntosGastados} puntos en premios. Tu saldo total actualizado es de ${nuevoTotalPuntos} puntos.`;
       }
 
       mensaje += `\n\n(Nota: Este pedido ya se encuentra registrado en el sistema bajo el código ${generatedId}. Los totales y disponibilidad están sujetos a verificación en la base de datos.)`;
@@ -563,7 +563,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
 
                           return (
                             <div key={premio.id} style={{
-                              background: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '8px',
+                              background: 'var(--color-white)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '8px',
                               opacity: isAffordable ? 1 : 0.5, display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'space-between',
                               overflow: 'hidden'
                             }}>
@@ -643,7 +643,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
                     value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
                   {phoneInput.length >= 6 && puntosGanadosEnEstaOrden > 0 && (
                     <p style={{ fontSize: '0.85rem', color: 'var(--color-burgundy)', marginTop: '6px', fontWeight: 'bold' }}>
-                      ✨ ¡Si ya eres cliente, ganarás {puntosGanadosEnEstaOrden} puntos con esta compra!
+                      <Sparkles size={14} className="inline-icon" /> ¡Si ya eres cliente, ganarás {puntosGanadosEnEstaOrden} puntos con esta compra!
                     </p>
                   )}
                 </div>
@@ -655,7 +655,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
                     onClick={() => { setDeliveryType('pickup'); setShippingCost(0); setShippingDistance(null); }}
                   >
                     <div className="radio-custom"></div>
-                    <div className="delivery-icon">🏠</div>
+                    <div className="delivery-icon"><Store size={22} /></div>
                     <div className="delivery-info">
                       <div className="delivery-name">Recojo en tienda</div>
                       <div className="delivery-desc">Pasa a retirar tu pedido</div>
@@ -668,7 +668,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
                     onClick={() => setDeliveryType('delivery')}
                   >
                     <div className="radio-custom"></div>
-                    <div className="delivery-icon">🛵</div>
+                    <div className="delivery-icon"><Truck size={22} /></div>
                     <div className="delivery-info">
                       <div className="delivery-name">Envío a domicilio</div>
                       <div className="delivery-desc">Calculado en el mapa</div>
@@ -683,7 +683,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
 
                 {deliveryType === 'delivery' && (
                   <div className="form-group map-section" style={{ marginTop: 20, marginBottom: 20, position: 'relative' }}>
-                    <label className="form-label">📍 Busca tu dirección de entrega</label>
+                    <label className="form-label"><MapPin size={14} className="inline-icon" /> Busca tu dirección de entrega</label>
                     <div style={{ position: 'relative', marginBottom: '12px' }}>
                       <input 
                         type="text" 
@@ -696,19 +696,19 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
                       <Search size={18} style={{ position: 'absolute', right: '12px', top: '10px', color: 'var(--color-text-light)' }} />
                       
                       {isSearching && (
-                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000, background: 'white', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '0.85rem', color: 'var(--color-text-light)' }}>
+                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000, background: 'var(--color-white)', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '0.85rem', color: 'var(--color-text-light)' }}>
                           Buscando...
                         </div>
                       )}
                       
                       {showNoResults && (
-                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000, background: 'white', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '0.85rem', color: 'var(--color-text-light)' }}>
+                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000, background: 'var(--color-white)', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '0.85rem', color: 'var(--color-text-light)' }}>
                           No se encontraron resultados. Intenta buscar calles o cruces.
                         </div>
                       )}
 
                       {!isSearching && searchResults.length > 0 && (
-                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000, background: 'white', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: '200px', overflowY: 'auto' }}>
+                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000, background: 'var(--color-white)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: '200px', overflowY: 'auto' }}>
                           {searchResults.map((res, index) => (
                             <div 
                               key={index} 
@@ -762,7 +762,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
                 {hasFood && (
                   <div className="date-picker-section">
                     <div className="date-picker-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>📅 Selecciona tu fecha de entrega</span>
+                      <span><CalendarDays size={15} className="inline-icon" /> Selecciona tu fecha de entrega</span>
                       {selectedDate && (
                         <button type="button" onClick={() => { setSelectedDate(''); setSelectedTime(''); }} style={{ background: 'none', border: 'none', color: 'var(--color-burgundy)', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}>
                           Cambiar fecha
@@ -826,7 +826,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
             </div>
 
             <div>
-              <div className="checkout-section-title">🧾 Resumen del Pedido</div>
+              <div className="checkout-section-title"><Receipt size={16} className="inline-icon" /> Resumen del Pedido</div>
               <div>
                 {cart.map(item => (
                   <div className="order-summary-item" key={item.id}>
@@ -846,7 +846,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
 
               {premiosSeleccionados.map((premio, idx) => (
                 <div key={`premio-${idx}`} className="order-summary-item" style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed var(--color-border)', color: 'var(--color-gold)', fontWeight: 600 }}>
-                  <span className="order-item-name">🎁 {premio.nombre} (Canje)</span>
+                  <span className="order-item-name"><Gift size={14} className="inline-icon" /> {premio.nombre} (Canje)</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span className="order-item-price">{premio.nombre.includes('Descuento de S/ 25') ? '- S/ 25.00' : 'GRATIS'}</span>
                     <button type="button" onClick={() => {
@@ -866,7 +866,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
               </div>
 
               <div style={{ marginTop: 20, padding: 14, background: 'var(--color-cream)', borderRadius: 'var(--radius-md)', fontSize: '.8rem', color: 'var(--color-text-light)', lineHeight: 1.55 }}>
-                <strong style={{ color: 'var(--color-burgundy)' }}>ℹ️ Información importante</strong><br />
+                <strong style={{ color: 'var(--color-burgundy)' }}><Info size={14} className="inline-icon" /> Información importante</strong><br />
                 Los pedidos de <strong>comida</strong> están sujetos al modelo de preventa semanal. 
                 Cerramos pedidos los <strong>viernes</strong>.
               </div>
@@ -876,7 +876,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
           <div className="checkout-success" style={{ display: 'flex' }}>
             <div className="success-icon"><Check size={40} /></div>
             <h3>¡Pedido realizado!</h3>
-            <p>Gracias por tu compra. Te contactaremos vía WhatsApp para confirmar los detalles. Tu pedido será preparado con mucho amor. 🪷</p>
+            <p>Gracias por tu compra. Te contactaremos vía WhatsApp para confirmar los detalles. Tu pedido será preparado con mucho amor.</p>
             <button className="btn btn-gold" onClick={handleClose}>Volver a la tienda</button>
           </div>
         )}
@@ -884,7 +884,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
         {!isSuccess && (
           <div className="checkout-footer">
             <button type="submit" form="checkout-form" className="btn btn-primary btn-block btn-lg" disabled={isSubmitting}>
-              {isSubmitting ? 'Procesando...' : '✅ Confirmar Pedido'}
+              {isSubmitting ? 'Procesando...' : <><Check size={18} /> Confirmar Pedido</>}
             </button>
           </div>
         )}
@@ -893,7 +893,7 @@ ${cart.map(item => `- ${item.name} (x${item.qty})`).join('\n')}${premioTexto}
 
       {itemDetalleModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999999, display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center' }} onClick={() => setItemDetalleModal(null)}>
-          <div style={{ background: '#fff', borderRadius: 'var(--radius-md)', maxWidth: '400px', width: '90%', overflow: 'hidden', position: 'relative' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--color-white)', borderRadius: 'var(--radius-md)', maxWidth: '400px', width: '90%', overflow: 'hidden', position: 'relative' }} onClick={e => e.stopPropagation()}>
             <img src={itemDetalleModal.img || '/images/default_food.png'} alt={itemDetalleModal.name} style={{ width: '100%', height: '250px', objectFit: 'cover' }} />
             <div style={{ padding: '20px' }}>
               <h3 style={{ margin: '0 0 10px 0', color: 'var(--color-burgundy)', fontFamily: 'var(--font-display)' }}>{itemDetalleModal.name}</h3>

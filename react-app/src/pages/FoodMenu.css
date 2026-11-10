@@ -1,0 +1,166 @@
+/* ============================================================
+   COMIDA — dark menu page (shares tokens and cards from Home.css)
+   ============================================================ */
+
+.fm-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding-block: clamp(56px, 8vw, 110px) clamp(48px, 6vw, 80px);
+  background: radial-gradient(900px 520px at 80% 30%, #4A1A0C 0%, #261008 50%, #120A07 85%);
+  border-bottom: 1px solid var(--line);
+}
+.mandala-fm {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  right: -12vw;
+  width: min(760px, 90vw);
+  aspect-ratio: 1;
+  translate: 0 -50%;
+  color: var(--turmeric);
+  opacity: .32;
+  -webkit-mask-image: radial-gradient(circle, #000 45%, transparent 72%);
+  mask-image: radial-gradient(circle, #000 45%, transparent 72%);
+}
+.mandala-fm [pathLength] {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: mx-draw 3.6s .1s cubic-bezier(.45, 0, .2, 1) forwards;
+}
+.fm-hero-inner { position: relative; z-index: 2; max-width: 760px; margin-inline: 0 auto; }
+.fm-hero-inner .mx-kicker { animation: mx-fade .8s both; }
+.fm-title {
+  margin-bottom: 18px;
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(2.6rem, 6vw, 5.4rem);
+  line-height: 1;
+  letter-spacing: -.025em;
+  color: var(--ink);
+  animation: mx-fade 1s .1s both;
+}
+.fm-title em {
+  font-style: italic;
+  background: var(--fire);
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: mx-flame 5s linear infinite;
+  padding-right: .06em;
+}
+.fm-sub { max-width: 520px; margin-bottom: 28px; color: var(--muted); font-size: 1.08rem; line-height: 1.7; animation: mx-fade 1s .2s both; }
+.fm-hero .mx-count { margin-bottom: 0; animation-delay: .3s; }
+
+/* presale strip */
+.fm-presale {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: -1px;
+  padding-top: 36px;
+}
+.fm-presale-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 20px 22px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: linear-gradient(160deg, rgba(255, 244, 226, .06), rgba(255, 244, 226, .015));
+}
+.fm-presale-icon {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: #1A0B05;
+  background: linear-gradient(140deg, var(--turmeric), var(--saffron));
+  box-shadow: 0 8px 22px rgba(255, 159, 28, .3);
+}
+.fm-presale-item strong { display: block; margin-bottom: 2px; font-family: var(--serif); font-size: 1.15rem; font-weight: 600; color: var(--ink); }
+.fm-presale-item p { color: var(--muted); font-size: .9rem; line-height: 1.5; }
+
+.fm-menu { padding-top: clamp(40px, 5vw, 64px); }
+
+/* loader */
+.fm-loader { display: grid; place-items: center; gap: 22px; padding-block: 60px; }
+.mandala-loader { width: 180px; aspect-ratio: 1; color: var(--turmeric); }
+.mandala-loader [pathLength] {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: mx-draw 2.6s cubic-bezier(.45, 0, .2, 1) forwards;
+}
+.mandala-loader .mandala-spin { animation-duration: 8s; }
+.fm-loader-text { font-family: var(--serif); font-style: italic; font-size: 1.35rem; color: var(--ink); animation: mx-fade .6s both; }
+
+/* filters */
+.fm-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+.fm-diet { display: flex; gap: 8px; flex-wrap: wrap; }
+.fm-diet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: rgba(255, 244, 226, .04);
+  border: 1px solid var(--line);
+  transition: color .3s, background .3s, border-color .3s;
+}
+.fm-diet-btn:hover { color: var(--ink); border-color: rgba(255, 201, 60, .4); }
+.fm-diet-btn.active { color: #1A0B05; background: var(--turmeric); border-color: var(--turmeric); }
+.fm-diet-btn.veg.active { background: var(--leaf); border-color: var(--leaf); color: #06200F; }
+.fm-diet-btn.nonveg.active { background: var(--chili); border-color: var(--chili); color: #fff; }
+
+@media (max-width: 900px) {
+  .fm-presale { grid-template-columns: 1fr; }
+  .fm-filters { flex-direction: column; align-items: stretch; }
+  .fm-filters .mx-tabs { align-self: flex-start; }
+  .mandala-fm { right: -40vw; opacity: .22; }
+}
+
+/* ---------- Tienda (reuses the menu layout) ---------- */
+.shop-hero { padding-block: clamp(48px, 6vw, 84px) clamp(40px, 5vw, 64px); }
+.shop-hero .fm-sub { margin-bottom: 0; }
+.shop-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: .82rem;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  background: rgba(255, 244, 226, .03);
+}
+.shop-note svg { flex-shrink: 0; color: var(--turmeric); }
+.shop-note strong { color: var(--ink); }
+.shop-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 70px 24px;
+  text-align: center;
+  border-radius: 28px;
+  border: 1px dashed rgba(255, 201, 60, .35);
+  background: radial-gradient(500px 220px at 50% 0%, rgba(255, 159, 28, .1), transparent 70%);
+}
+.shop-empty svg { color: var(--turmeric); }
+.shop-empty h3 { font-family: var(--serif); font-weight: 600; font-size: 2.2rem; color: var(--ink); }
+.shop-empty p { max-width: 440px; color: var(--muted); line-height: 1.65; margin-bottom: 8px; }

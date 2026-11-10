@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Tag, Utensils, Box, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Tag, Utensils, Box, X, Gem } from 'lucide-react';
 import { sheetsService } from '../services/sheetsService';
 
 export default function Admin() {
@@ -381,7 +381,7 @@ export default function Admin() {
                                   )}
                                 </div>
                                 <div style={{ color: 'var(--color-gold)', fontWeight: 600 }}>
-                                  💎 {item.Puntos_Otorgados || 0}
+                                  <Gem size={14} className="inline-icon" /> {item.Puntos_Otorgados || 0}
                                 </div>
                               </div>
                             </>

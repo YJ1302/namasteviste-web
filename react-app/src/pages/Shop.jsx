@@ -1,24 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { Heart, Plus, ShoppingCart } from 'lucide-react';
+import { Sparkles, TriangleAlert, ArrowRight } from 'lucide-react';
 import { sheetsService } from '../services/sheetsService';
 import ItemModal from '../components/ItemModal';
+import Mandala from '../components/Mandala';
+import DishCard from '../components/DishCard';
+import { flyToCart } from '../utils/flyToCart';
+import './Home.css';
+import './FoodMenu.css';
+
+const FILTERS = ['todos', 'ropa', 'joyeria', 'henna'];
+const FILTER_LABELS = { todos: 'Todo', ropa: 'Ropa', joyeria: 'Joyería', henna: 'Henna' };
+const HENNA_NOTICE = 'Solo venta de productos — No incluye aplicación';
 
 export default function Shop() {
   const { addToCart, toggleWishlist, wishlist } = useCart();
+  const rootRef = useRef(null);
+  const tabRefs = useRef({});
   const [activeFilter, setActiveFilter] = useState('todos');
   const [shopProducts, setShopProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
   const [addedItems, setAddedItems] = useState({});
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
 
-  const handleAddToCart = (e, item) => {
-    e.stopPropagation();
+  const handleAddToCart = (item, img) => {
     addToCart(item);
+    flyToCart(img);
     setAddedItems(prev => ({ ...prev, [item.id]: true }));
     setTimeout(() => {
       setAddedItems(prev => ({ ...prev, [item.id]: false }));
-    }, 5000);
+    }, 2500);
   };
 
   useEffect(() => {
@@ -43,129 +56,103 @@ export default function Shop() {
     loadShop();
   }, []);
 
-  const filteredProducts = shopProducts.filter(p => {
-    // Filter by active category
-    if (activeFilter !== 'todos' && p.category !== activeFilter) return false;
-    
-    return true;
-  });
+  const filteredProducts = shopProducts.filter(p => activeFilter === 'todos' || p.category === activeFilter);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = tabRefs.current[activeFilter];
+      if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth });
+    };
+    measure();
+    document.fonts?.ready.then(measure);
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [activeFilter]);
+
+  useEffect(() => {
+    const els = rootRef.current.querySelectorAll('[data-reveal]:not(.in)');
+    const io = new IntersectionObserver((entries) => entries.forEach((en) => {
+      if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+    }), { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [loading, activeFilter]);
 
   return (
-    <section id="shop-section" className="section">
-      <div className="container">
-        <div className="section-header">
-          <div className="section-tag">👗 Nuestra Tienda</div>
-          <h2 className="section-title">Ropa, Joyería y Henna</h2>
+    <div className="mx fm shop" ref={rootRef}>
+      <section className="fm-hero shop-hero">
+        <Mandala variant="fm" />
+        <div className="container fm-hero-inner">
+          <div className="mx-kicker">Nuestra tienda</div>
+          <h1 className="fm-title">Ropa, joyería <em>y henna</em></h1>
+          <p className="fm-sub">Kurtas bordados, jhumkas, bangles y henna natural, traídos de la India para completar tu fiesta.</p>
         </div>
+      </section>
 
-        <div className="shop-layout">
-          {/* Sidebar */}
-          <aside className="shop-sidebar">
-            <div className="sidebar-title">Filtrar por</div>
-            <div className="filter-group">
-              <div className="filter-options">
-                {['todos', 'ropa', 'joyeria', 'henna'].map(cat => (
-                  <button 
-                    key={cat}
-                    className={`filter-option ${activeFilter === cat ? 'active' : ''}`}
-                    onClick={() => setActiveFilter(cat)}
-                  >
-                    <span className="filter-check">✓</span>
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                  </button>
-                ))}
-              </div>
+      <section className="mx-section fm-menu">
+        <div className="container">
+          <div className="fm-filters">
+            <div className="mx-tabs" role="tablist" aria-label="Categorías">
+              <span className="mx-tab-ind" style={{ width: indicator.width, transform: `translateX(${indicator.left}px)` }} />
+              {FILTERS.map(cat => (
+                <button
+                  key={cat}
+                  ref={(el) => { tabRefs.current[cat] = el; }}
+                  role="tab"
+                  aria-selected={activeFilter === cat}
+                  className={`mx-tab ${activeFilter === cat ? 'active' : ''}`}
+                  onClick={() => setActiveFilter(cat)}
+                >
+                  {FILTER_LABELS[cat]}
+                </button>
+              ))}
             </div>
 
-            {/* Henna Disclaimer Block */}
-            <div style={{background: 'linear-gradient(135deg,rgba(78,52,46,.08),rgba(78,52,46,.04))', border: '1px solid rgba(78,52,46,.2)', borderRadius: 'var(--radius-md)', padding: '12px 14px', fontSize: '.78rem', color: 'var(--color-text-light)', lineHeight: 1.5, marginTop: 8}}>
-              <div style={{fontWeight: 700, color: 'var(--color-brown)', marginBottom: 5}}>⚠️ Categoría Henna</div>
-              Vendemos <strong>únicamente productos físicos</strong> de henna. <strong>No incluye aplicación profesional</strong>.
+            <div className="shop-note">
+              <TriangleAlert size={15} />
+              <span>Henna: vendemos <strong>únicamente productos físicos</strong>. No incluye aplicación.</span>
             </div>
-          </aside>
-
-          {/* Product Grid */}
-          <div className="shop-main">
-            {loading ? (
-              <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--color-text-light)' }}>
-                <div style={{ width: '40px', height: '40px', border: '3px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }}></div>
-                <p>Cargando catálogo...</p>
-              </div>
-            ) : filteredProducts.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '80px 20px', background: 'var(--color-cream)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--color-gold)', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ fontSize: '3.5rem', marginBottom: '16px', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}>✨</div>
-                <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-burgundy)', fontSize: '2rem', marginBottom: '12px' }}>Próximamente</h3>
-                <p style={{ color: 'var(--color-text-light)', fontSize: '1.05rem', maxWidth: '400px', margin: '0 auto', lineHeight: '1.6' }}>
-                  Estamos preparando una colección increíble para esta sección. ¡Vuelve pronto para descubrir nuestras nuevas prendas y accesorios traídos desde la India!
-                </p>
-              </div>
-            ) : (
-              <div className="product-grid">
-                {filteredProducts.map((product, index) => (
-                  <article 
-                    className="product-card" 
-                    key={`${product.id}-${product.name}-${index}`}
-                    onClick={() => setSelectedItem(product)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="product-img-wrap">
-                      <img src={product.img} alt={product.name} loading="lazy" />
-                      {product.hennaNotice && (
-                        <div className="badge-notice">⚠️ Solo venta de productos — No incluye aplicación</div>
-                      )}
-                      <div className="product-overlay">
-                        <div style={{ position: 'relative' }}>
-                          <button className="overlay-btn" onClick={(e) => handleAddToCart(e, product)}><ShoppingCart size={18} /></button>
-                          {addedItems[product.id] && (
-                            <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px', background: '#43A047', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap', animation: 'fadeIn 0.2s ease-out', zIndex: 10 }}>
-                              ¡Agregado!
-                            </div>
-                          )}
-                        </div>
-                        <button className="overlay-btn" onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}><Heart size={18} /></button>
-                      </div>
-                      {product.badge && <span className={`product-badge ${product.badgeClass}`}>{product.badge}</span>}
-                      <button 
-                        className={`wishlist-btn ${wishlist.includes(product.id) ? 'active' : ''}`} 
-                        onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
-                      >
-                        <Heart size={16} fill={wishlist.includes(product.id) ? 'currentColor' : 'none'} />
-                      </button>
-                    </div>
-                    <div className="product-body">
-                      <div className="product-cat">{product.category}</div>
-                      <h3 className="product-name">{product.name}</h3>
-                      <div className="product-price-row">
-                        <div className="product-price">
-                          {product.oldPrice && <span className="old-price">S/ {product.oldPrice.toFixed(2)}</span>}
-                          S/ {product.price.toFixed(2)}
-                        </div>
-                        <div style={{ position: 'relative' }}>
-                          <button className="quick-add-btn" onClick={(e) => handleAddToCart(e, product)}><Plus size={18}/></button>
-                          {addedItems[product.id] && (
-                            <div style={{ position: 'absolute', bottom: '100%', right: '0', marginBottom: '8px', background: '#43A047', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', whiteSpace: 'nowrap', animation: 'fadeIn 0.2s ease-out' }}>
-                              ¡Agregado!
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
           </div>
+
+          {loading ? (
+            <div className="mx-grid">{[0, 1, 2].map((i) => <div className="mx-skel" key={i} />)}</div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="shop-empty" data-reveal>
+              <Sparkles size={44} strokeWidth={1.4} />
+              <h3>Próximamente</h3>
+              <p>Estamos preparando una colección increíble para esta sección. ¡Vuelve pronto para descubrir nuestras nuevas prendas y accesorios traídos desde la India!</p>
+              <Link to="/comida" className="mx-btn mx-btn-line">Mientras tanto, mira la carta <ArrowRight size={16} /></Link>
+            </div>
+          ) : (
+            <div className="mx-grid">
+              {filteredProducts.map((product, index) => (
+                <div data-reveal style={{ '--d': `${(index % 3) * 0.08}s` }} key={`${activeFilter}-${product.id}-${index}`}>
+                  <DishCard
+                    dish={product}
+                    open
+                    added={addedItems[product.id]}
+                    onAdd={handleAddToCart}
+                    onOpen={setSelectedItem}
+                    kicker={FILTER_LABELS[product.category] || product.category}
+                    notice={product.hennaNotice ? HENNA_NOTICE : null}
+                    onWish={toggleWishlist}
+                    wished={wishlist.includes(product.id)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      </section>
 
       {selectedItem && (
-        <ItemModal 
-          item={selectedItem} 
-          onClose={() => setSelectedItem(null)} 
+        <ItemModal
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
           onAddToCart={addToCart}
           isOrderingOpen={true} // Tienda siempre abierta para añadir al carrito
         />
       )}
-    </section>
+    </div>
   );
 }

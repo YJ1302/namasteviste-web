@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
-import { ShoppingCart, X, Plus, Minus, Trash2 } from 'lucide-react';
+import { ShoppingCart, X, Plus, Minus, Trash2, UtensilsCrossed, Package, Sparkles, ArrowRight } from 'lucide-react';
 
 const crossSellItems = [
   { id: 'hn-001', name: 'Kit Henna Natural', price: 18.90, img: '/images/henna_products.png', type: 'shop' },
@@ -45,7 +45,9 @@ export default function CartDrawer({ isOpen, onClose, onOpenCheckout }) {
                   <div className="cart-item-info">
                     <div className="cart-item-name">{item.name}</div>
                     <div className="cart-item-variant">
-                      {item.type === 'food' ? '🍽️ Pedido de fin de semana' : '📦 Producto tienda'}
+                      {item.type === 'food'
+                        ? <><UtensilsCrossed size={12} className="inline-icon" /> Pedido de fin de semana</>
+                        : <><Package size={12} className="inline-icon" /> Producto tienda</>}
                     </div>
                     <div className="cart-item-controls">
                       <div className="qty-control">
@@ -64,7 +66,7 @@ export default function CartDrawer({ isOpen, onClose, onOpenCheckout }) {
 
               {hasFood && (
                 <div className="crosssell-section" style={{marginTop: 20}}>
-                  <div className="crosssell-title">✨ ¡Aprovecha el envío!</div>
+                  <div className="crosssell-title"><Sparkles size={15} className="inline-icon" /> ¡Aprovecha el envío!</div>
                   <div className="crosssell-subtitle">Agrega productos de la tienda a tu pedido de comida sin costo extra de envío.</div>
                   <div className="crosssell-items">
                     {crossSellItems.map(cs => (
@@ -95,7 +97,7 @@ export default function CartDrawer({ isOpen, onClose, onOpenCheckout }) {
               <span>S/ {cartTotal.toFixed(2)}</span>
             </div>
             <button className="btn btn-primary btn-block btn-lg" onClick={onOpenCheckout}>
-              Finalizar Pedido →
+              Finalizar Pedido <ArrowRight size={18} />
             </button>
           </div>
         )}

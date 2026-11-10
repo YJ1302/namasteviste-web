@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { ShoppingCart, Heart, Menu, X, Award } from 'lucide-react';
+import { ShoppingCart, Heart, Menu, X, Award, UtensilsCrossed, House, Shirt } from 'lucide-react';
 import { sheetsService } from '../services/sheetsService';
 
 export default function Header({ onOpenCart }) {
@@ -35,11 +35,10 @@ export default function Header({ onOpenCart }) {
         {/* Logo */}
         <Link to="/" className="logo" aria-label="Namas-te-vistes — Inicio">
           <div className="logo-placeholder" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-             <img src="/images/logo.jpg" alt="Namas-te-vistes Logo" className="logo-class" style={{ height: '60px', width: 'auto', borderRadius: '50%' }} />
-             {/* <div className="logo-icon" aria-hidden="true">🪷</div> */}
+             <img src="/images/logo.jpg" alt="Namas-te-vistes Logo" className="logo-class" style={{ height: '50px', width: 'auto', borderRadius: '50%' }} />
              <div className="logo-text">
                <span className="logo-main">Namas-te-vistes</span>
-               <span className="logo-sub">Moda de India, Estilo para Lima</span>
+               <span className="logo-sub">Cocina india · Lima</span>
              </div>
           </div>
         </Link>
@@ -48,7 +47,7 @@ export default function Header({ onOpenCart }) {
         <nav className="main-nav" role="navigation" aria-label="Navegación principal">
           <NavLink to="/" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>Inicio</NavLink>
           <NavLink to="/tienda" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>Tienda</NavLink>
-          <NavLink to="/comida" className={({isActive}) => `nav-link nav-food ${isActive ? 'active' : ''}`}>🍛 Fin de Semana de Sabores</NavLink>
+          <NavLink to="/comida" className={({isActive}) => `nav-link nav-food ${isActive ? 'active' : ''}`}><UtensilsCrossed size={15} className="nav-icon" /> Fin de Semana de Sabores</NavLink>
         </nav>
 
         {/* Actions */}
@@ -73,9 +72,9 @@ export default function Header({ onOpenCart }) {
 
       {/* Mobile nav */}
       <nav id="mobile-nav" className={`mobile-nav container ${mobileMenuOpen ? 'open' : ''}`} aria-label="Navegación móvil">
-        <NavLink to="/" className="nav-link" onClick={() => setMobileMenuOpen(false)}>🏠 Inicio</NavLink>
-        <NavLink to="/tienda" className="nav-link" onClick={() => setMobileMenuOpen(false)}>👗 Tienda</NavLink>
-        <NavLink to="/comida" className="nav-link nav-food" onClick={() => setMobileMenuOpen(false)}>🍛 Fin de Semana de Sabores</NavLink>
+        <NavLink to="/" className="nav-link" onClick={() => setMobileMenuOpen(false)}><House size={16} className="nav-icon" /> Inicio</NavLink>
+        <NavLink to="/tienda" className="nav-link" onClick={() => setMobileMenuOpen(false)}><Shirt size={16} className="nav-icon" /> Tienda</NavLink>
+        <NavLink to="/comida" className="nav-link nav-food" onClick={() => setMobileMenuOpen(false)}><UtensilsCrossed size={16} className="nav-icon" /> Fin de Semana de Sabores</NavLink>
       </nav>
       </header>
 

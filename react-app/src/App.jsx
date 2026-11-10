@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header';
@@ -8,6 +8,7 @@ import AnnouncementBar from './components/AnnouncementBar';
 import CartDrawer from './components/CartDrawer';
 import CheckoutModal from './components/CheckoutModal';
 import AIChatbot from './components/AIChatbot';
+import Mandala from './components/Mandala';
 import { sheetsService } from './services/sheetsService';
 
 import Home from './pages/Home';
@@ -16,11 +17,19 @@ import Shop from './pages/Shop';
 import Admin from './pages/Admin';
 
 import './index.css';
+import './theme.css';
+import './dark.css';
 
 function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [todosLosProductos, setTodosLosProductos] = useState([]);
+  const { pathname } = useLocation();
+
+  // Dark "Masala Nights" theme everywhere except the admin panel
+  useEffect(() => {
+    document.body.classList.toggle('is-dark', !pathname.startsWith('/admin'));
+  }, [pathname]);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -52,6 +61,7 @@ function App() {
 
   return (
     <CartProvider>
+      <Mandala variant="page" />
       <div className="app-container">
         <AnnouncementBar />
         <Header onOpenCart={() => setIsCartOpen(true)} />
